@@ -5,17 +5,9 @@ spring:
   application:
     name: gotothemarket-app
 
-  datasource:
-    url: jdbc:postgresql://localhost:5432/gotothemarket
-    username: postgres
-    password: "0118"
-    driver-class-name: org.postgresql.Driver
+  # 프로파일별 설정은 각각의 파일에서 관리
+  profiles:
+    active: dev  # 기본적으로 dev 프로파일 사용
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
