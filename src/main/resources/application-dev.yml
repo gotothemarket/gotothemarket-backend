@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/gotothemarket #로컬 DB 생성할때 이름을 gotothemarket으로 만들면 나랑 url 똑같아
+    username: postgres #이것도 username 나랑 똑같이 하면 수정 할 필요 없음
+    password: "로컬-비밀번호"  # 각자 자신의 비밀번호로 수정
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # 개발 시에는 테이블 자동 생성/삭제
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.hibernate: DEBUG
+    com.example.gotothemarket: DEBUG
