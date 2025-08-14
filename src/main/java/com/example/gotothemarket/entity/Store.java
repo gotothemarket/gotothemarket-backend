@@ -12,6 +12,10 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import org.locationtech.jts.geom.Point;
+
 @Entity
 @Table(name = "store")
 @Getter
@@ -43,7 +47,8 @@ public class Store {
     @Column(name = "address", length = 255, nullable = true)
     private String address;
 
-    @Column(name = "store_coord", columnDefinition = "POINT")
+    @JdbcTypeCode(SqlTypes.GEOMETRY)
+    @Column(name = "store_coord", columnDefinition = "geometry(Point,4326)")
     private Point storeCoord;
 
     @Column(name = "phone_number", length = 20, nullable = true)
