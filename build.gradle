@@ -29,6 +29,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.locationtech.jts:jts-core:1.19.0'
 	implementation 'org.hibernate.orm:hibernate-spatial:6.5.2.Final'
+	implementation 'net.postgis:postgis-jdbc:2021.1.0'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
