@@ -22,10 +22,8 @@ public class StoreDTO {
         private Double longitude;
         private String phoneNumber;
 
-        private Integer openHour;
-        private Integer openMinute;
-        private Integer closeHour;
-        private Integer closeMinute;
+        private String openingTime;
+        private String closingTime;
 
         private String storeIcon;
     }
@@ -41,10 +39,8 @@ public class StoreDTO {
         private Double longitude;
         private String phoneNumber;
 
-        private Integer openHour;
-        private Integer openMinute;
-        private Integer closeHour;
-        private Integer closeMinute;
+        private String openingTime;
+        private String closingTime;
 
         private String storeIcon;
         private String message;

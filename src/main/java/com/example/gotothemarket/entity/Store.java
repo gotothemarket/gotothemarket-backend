@@ -52,10 +52,10 @@ public class Store {
     private String phoneNumber;
 
     @Column(name = "opening_hours", nullable = true)
-    private LocalTime openingHours;
+    private String openingHours;
 
     @Column(name = "closing_hours", nullable = true)
-    private LocalTime closingHours;
+    private String closingHours;
 
     @Column(name = "average_rating", precision = 2, scale = 1, nullable = true)
     private BigDecimal averageRating;
