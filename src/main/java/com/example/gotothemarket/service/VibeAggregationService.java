@@ -127,7 +127,7 @@ public class VibeAggregationService {
         int V = LABEL_CARDINALITY; // 또는 rows.size() / VibeRepository.countActive()
         double denomAdj = denom + ALPHA * V;
         for (StoreVibeStat row : rows) {
-            double numer = row.getHitCount() + ALPHA;
+            double numer = (row.getHitCount() == 0) ? 0.0 : row.getHitCount() + ALPHA;
             double r = (denomAdj > 0.0) ? (numer / denomAdj) : 0.0;
             row.setRatio(r);
             row.touch();
