@@ -11,3 +11,14 @@ spring:
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+cohere:
+  api-key: 6HBPNU7ghCDXj0gw3Y1hinL8wzlfstBvCNEVg78F
+  model-id: 2d5851a4-348c-453a-bb19-87bb412a6383-ft
+
+logging:
+  level:
+    org.springframework.data.jpa.repository.query: INFO
+    org.hibernate.internal.AbstractSharedSessionContract: ERROR
+    org.hibernate.resource.transaction.backend.jdbc: ERROR
+    org.hibernate.orm.sql.ast: WARN
