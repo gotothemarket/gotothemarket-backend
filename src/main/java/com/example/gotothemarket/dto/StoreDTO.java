@@ -18,14 +18,13 @@ public class StoreDTO {
     public static class StoreRequestDTO {
         private Integer memberId;
         private Integer marketId;
-        private Integer storeTypeId;
+        private Integer storeType;
         private String storeName;
         private String address;
-        private Double latitude;
-        private Double longitude;
+        private StoreCoord storeCoord;
         private String phoneNumber;
-        private String openingTime;
-        private String closingTime;
+        private String openingHours;
+        private String closingHours;
         private String storeIcon;
     }
 
@@ -77,6 +76,8 @@ public class StoreDTO {
     // 좌표 정보
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class StoreCoord {
         private Double lat;
         private Double lng;
@@ -128,11 +129,10 @@ public class StoreDTO {
     public static class StoreUpdateDTO {
         private String storeName;
         private String address;
-        private Double latitude;
-        private Double longitude;
+        private StoreCoord storeCoord;
         private String phoneNumber;
-        private String openingTime;
-        private String closingTime;
+        private String openingHours;
+        private String closingHours;
         private String storeIcon;
     }
 }

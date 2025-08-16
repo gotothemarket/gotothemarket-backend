@@ -39,7 +39,7 @@ public class Store {
     @Column(name = "store_name", length = 100, nullable = false)
     private String storeName;
 
-    @Column(name = "address", length = 255, nullable = false)
+    @Column(name = "address", length = 255, nullable = true)
     private String address;
 
     @Column(name = "store_coord", columnDefinition = "geometry(Point,4326)")

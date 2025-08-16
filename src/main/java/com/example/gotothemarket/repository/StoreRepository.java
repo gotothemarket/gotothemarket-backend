@@ -8,20 +8,28 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-
 @Repository
 public interface StoreRepository extends JpaRepository<Store, Integer> {
 
-    // 상점 상세 정보 조회
+    // 기본 상점 정보만 조회
     @Query("SELECT s FROM Store s " +
-           "LEFT JOIN FETCH s.member m " +
-           "LEFT JOIN FETCH s.market mk " +
-           "LEFT JOIN FETCH s.storeType st " +
-           "LEFT JOIN FETCH s.reviews r " +
-           "LEFT JOIN FETCH r.member rm " +
-           "LEFT JOIN FETCH rm.badges " +
-           "LEFT JOIN FETCH s.photos p " +
-           "WHERE s.storeId = :storeId")
-    Optional<Store> findStoreWithDetailsById(@Param("storeId") Integer storeId);
+            "LEFT JOIN FETCH s.member m " +
+            "LEFT JOIN FETCH s.market mk " +
+            "LEFT JOIN FETCH s.storeType st " +
+            "WHERE s.storeId = :storeId")
+    Optional<Store> findStoreWithBasicDetailsById(@Param("storeId") Integer storeId);
 
+    // 리뷰와 함께 조회
+    @Query("SELECT s FROM Store s " +
+            "LEFT JOIN FETCH s.reviews r " +
+            "LEFT JOIN FETCH r.member rm " +
+            "LEFT JOIN FETCH rm.badges " +
+            "WHERE s.storeId = :storeId")
+    Optional<Store> findStoreWithReviewsById(@Param("storeId") Integer storeId);
+
+    // 사진과 함께 조회
+    @Query("SELECT s FROM Store s " +
+            "LEFT JOIN FETCH s.photos p " +
+            "WHERE s.storeId = :storeId")
+    Optional<Store> findStoreWithPhotosById(@Param("storeId") Integer storeId);
 }

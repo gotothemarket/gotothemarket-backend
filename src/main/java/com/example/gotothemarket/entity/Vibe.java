@@ -26,6 +26,12 @@ public class Vibe {
     @Column(name = "vibe_name", length = 100, nullable = false)
     private String vibeName;
 
+    @Column(name = "label_code", length = 50, nullable = false, unique = true)
+    private String labelCode;
+
+    @Column(name = "code", nullable = false, unique = true)
+    private Integer code;
+
     // 비즈니스 메서드
     public void updateVibeName(String newVibeName) {
         this.vibeName = newVibeName;

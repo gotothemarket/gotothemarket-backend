@@ -2,31 +2,35 @@ package com.example.gotothemarket.controller;
 
 import com.example.gotothemarket.service.StoreService;
 import com.example.gotothemarket.dto.StoreDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-// StoreController.java
 @RestController
 @RequestMapping("/api/stores")
 @RequiredArgsConstructor
+@Tag(name = "상점", description = "상점 관련 API")
 public class StoreController {
 
     private final StoreService storeService;
 
-    //가게ㅔ 정보 등록
+    @Operation(summary = "가게 정보 등록")
     @PostMapping
     public ResponseEntity<StoreDTO.StoreResponseDTO> createStore(@RequestBody StoreDTO.StoreRequestDTO dto) {
         StoreDTO.StoreResponseDTO response = storeService.createStore(dto);
         return ResponseEntity.ok(response);
     }
-    // 단일 상점 상세 조회
+
+    @Operation(summary = "가게 상세 조회")
     @GetMapping("/{storeId}")
     public ResponseEntity<StoreDTO.StoreDetailResponse> getStoreDetail(@PathVariable Integer storeId) {
         StoreDTO.StoreDetailResponse response = storeService.getStoreDetail(storeId);
         return ResponseEntity.ok(response);
     }
-    // 상점 정보 부분 업데이트
+
+    @Operation(summary = "가게 정보 수정")
     @PatchMapping("/{storeId}")
     public ResponseEntity<StoreDTO.StoreDetailResponse> updateStore(
             @PathVariable Integer storeId,

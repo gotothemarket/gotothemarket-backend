@@ -23,7 +23,10 @@ public class StoreService {
 
     // POST
     public StoreDTO.StoreResponseDTO createStore(StoreDTO.StoreRequestDTO dto) {
-        Point storeCoord = createPoint(dto.getLatitude(), dto.getLongitude());
+        Point storeCoord = createPoint(
+                dto.getStoreCoord() != null ? dto.getStoreCoord().getLat() : null,
+                dto.getStoreCoord() != null ? dto.getStoreCoord().getLng() : null
+        );
 
         Store store = Store.builder()
                 .member(createTempMember())
@@ -33,21 +36,21 @@ public class StoreService {
                 .address(dto.getAddress())
                 .storeCoord(storeCoord)
                 .phoneNumber(dto.getPhoneNumber())
-                .openingHours(dto.getOpeningTime())
-                .closingHours(dto.getClosingTime())
+                .openingHours(dto.getOpeningHours())
+                .closingHours(dto.getClosingHours())
                 .storeIcon(dto.getStoreIcon())
                 .favoriteCheck(false)
                 .reviewCount(0)
                 .build();
 
         Store savedStore = storeRepository.save(store);
-        return createResponseDTO(savedStore, dto);
+        return createResponseDTO(savedStore);
     }
 
     // GET
     @Transactional(readOnly = true)
     public StoreDTO.StoreDetailResponse getStoreDetail(Integer storeId) {
-        Store store = storeRepository.findStoreWithDetailsById(storeId)
+        Store store = storeRepository.findStoreWithBasicDetailsById(storeId)
                 .orElseThrow(() -> new RuntimeException("상점을 찾을 수 없습니다. ID: " + storeId));
 
         return StoreDTO.StoreDetailResponse.builder()
@@ -63,7 +66,6 @@ public class StoreService {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new RuntimeException("상점을 찾을 수 없습니다. ID: " + storeId));
 
-        //부분 수정 코드 이게 맞나?
         Store.StoreBuilder builder = Store.builder()
                 .storeId(store.getStoreId())
                 .member(store.getMember())
@@ -72,16 +74,18 @@ public class StoreService {
                 .storeName(updateDTO.getStoreName() != null ? updateDTO.getStoreName() : store.getStoreName())
                 .address(updateDTO.getAddress() != null ? updateDTO.getAddress() : store.getAddress())
                 .phoneNumber(updateDTO.getPhoneNumber() != null ? updateDTO.getPhoneNumber() : store.getPhoneNumber())
-                .openingHours(updateDTO.getOpeningTime() != null ? updateDTO.getOpeningTime() : store.getOpeningHours())
-                .closingHours(updateDTO.getClosingTime() != null ? updateDTO.getClosingTime() : store.getClosingHours())
+                .openingHours(updateDTO.getOpeningHours() != null ? updateDTO.getOpeningHours() : store.getOpeningHours())
+                .closingHours(updateDTO.getClosingHours() != null ? updateDTO.getClosingHours() : store.getClosingHours())
                 .storeIcon(updateDTO.getStoreIcon() != null ? updateDTO.getStoreIcon() : store.getStoreIcon())
                 .averageRating(store.getAverageRating())
                 .reviewCount(store.getReviewCount())
                 .favoriteCheck(store.getFavoriteCheck());
 
-        //위도 경도 point로 바꾸기
-        if (updateDTO.getLatitude() != null && updateDTO.getLongitude() != null) {
-            Point newCoord = createPoint(updateDTO.getLatitude(), updateDTO.getLongitude());
+        // 위도 경도 point로 바꾸기
+        if (updateDTO.getStoreCoord() != null &&
+                updateDTO.getStoreCoord().getLat() != null &&
+                updateDTO.getStoreCoord().getLng() != null) {
+            Point newCoord = createPoint(updateDTO.getStoreCoord().getLat(), updateDTO.getStoreCoord().getLng());
             builder.storeCoord(newCoord);
         } else {
             builder.storeCoord(store.getStoreCoord());
@@ -162,7 +166,7 @@ public class StoreService {
 
         // 지금은 대표 뱃지로 첫 번째 배지를 반환 TODO: 대표뱃지 구현 후 대표뱃지로 하기
         Badge badge = member.getBadges().get(0);
-        
+
         return StoreDTO.BadgeInfo.builder()
                 .badgeId(badge.getBadgeId())
                 .badgeName(badge.getBadgeName())
@@ -191,7 +195,7 @@ public class StoreService {
         return StoreType.builder().storeTypeId(1).build();
     }
 
-    private StoreDTO.StoreResponseDTO createResponseDTO(Store savedStore, StoreDTO.StoreRequestDTO dto) {
+    private StoreDTO.StoreResponseDTO createResponseDTO(Store savedStore) {
         Double latitude = null;
         Double longitude = null;
 
