@@ -2,6 +2,7 @@ package com.example.gotothemarket.service;
 
 import com.example.gotothemarket.entity.*;
 import com.example.gotothemarket.repository.StoreRepository;
+import com.example.gotothemarket.repository.FavoriteRepository;
 import com.example.gotothemarket.dto.StoreDTO;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class StoreService {
 
     private final StoreRepository storeRepository;
+    private final FavoriteRepository favoriteRepository;
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
     // POST
@@ -106,6 +108,10 @@ public class StoreService {
                     .lng(store.getStoreCoord().getX())
                     .build();
         }
+        // 멤버 고정시키기
+        Member member = Member.builder().memberId(1).build();
+        boolean isFavorite = favoriteRepository.existsByMemberAndStore(member, store);
+
 
         return StoreDTO.StoreInfo.builder()
                 .storeId(store.getStoreId())
@@ -120,7 +126,7 @@ public class StoreService {
                 .openingHours(store.getOpeningHours())
                 .closingHours(store.getClosingHours())
                 .storeIcon(store.getStoreIcon())
-                .favoriteCheck(store.getFavoriteCheck())
+                .favoriteCheck(isFavorite)
                 .build();
     }
 
