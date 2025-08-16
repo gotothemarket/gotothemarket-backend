@@ -14,7 +14,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/stores")
 @RequiredArgsConstructor
-@Tag(name = "Store", description = "상점 관련 API")
+@Tag(name = "상점", description = "상점 관련 API")
 public class FavoriteController {
 
     private final FavoriteService favoriteService;
