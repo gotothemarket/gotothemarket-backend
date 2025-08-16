@@ -8,13 +8,8 @@ import lombok.NoArgsConstructor;
 import org.locationtech.jts.geom.Point;
 
 import java.math.BigDecimal;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-import org.locationtech.jts.geom.Point;
 
 @Entity
 @Table(name = "store")
@@ -38,7 +33,7 @@ public class Store {
     private Market market;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "store_type", nullable = true)
+    @JoinColumn(name = "store_type", nullable = false)
     private StoreType storeType;
 
     @Column(name = "store_name", length = 100, nullable = false)
@@ -47,7 +42,6 @@ public class Store {
     @Column(name = "address", length = 255, nullable = true)
     private String address;
 
-    @JdbcTypeCode(SqlTypes.GEOMETRY)
     @Column(name = "store_coord", columnDefinition = "geometry(Point,4326)")
     private Point storeCoord;
 
@@ -55,10 +49,10 @@ public class Store {
     private String phoneNumber;
 
     @Column(name = "opening_hours", nullable = true)
-    private LocalTime openingHours;
+    private String openingHours;
 
     @Column(name = "closing_hours", nullable = true)
-    private LocalTime closingHours;
+    private String closingHours;
 
     @Column(name = "average_rating", precision = 2, scale = 1, nullable = true)
     private BigDecimal averageRating;
@@ -87,47 +81,4 @@ public class Store {
     @Builder.Default
     private List<Favorite> favorites = new ArrayList<>();
 
-    // 비즈니스 메서드들
-    public void updateRating(BigDecimal newRating) {
-        this.averageRating = newRating;
-    }
-
-    public void incrementReviewCount() {
-        this.reviewCount = (this.reviewCount == null) ? 1 : this.reviewCount + 1;
-    }
-
-    public void toggleFavorite() {
-        this.favoriteCheck = (this.favoriteCheck == null) ? true : !this.favoriteCheck;
-    }
-
-    // 리뷰 추가
-    public void addReview(Review review) {
-        this.reviews.add(review);
-    }
-
-    // 사진 추가
-    public void addPhoto(Photo photo) {
-        this.photos.add(photo);
-    }
-
-    // 사진 개수 조회
-    public int getPhotoCount() {
-        return photos.size();
-    }
-
-    // 즐겨찾기 추가
-    public void addFavorite(Favorite favorite) {
-        this.favorites.add(favorite);
-    }
-
-    // 즐겨찾기 개수 조회
-    public int getFavoriteCount() {
-        return favorites.size();
-    }
-
-    // 즐겨찾기 여부 확인 (특정 회원이 즐겨찾기했는지)
-    public boolean isFavoritedBy(Member member) {
-        return favorites.stream()
-                .anyMatch(favorite -> favorite.getMember().equals(member));
-    }
 }

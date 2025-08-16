@@ -18,7 +18,7 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @PostMapping("/store/{storeId}/review")
+    @PostMapping("/stores/{storeId}/review")
     public ResponseEntity<?> createReview(
             @PathVariable Long storeId,
             @Valid @RequestBody ReviewCreateRequest req) {

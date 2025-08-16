@@ -11,6 +11,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/gotothemarket
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-0118}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
     depends_on:
       postgres:
         condition: service_healthy
@@ -19,7 +20,7 @@ services:
       - app-network
 
   postgres:
-    image: postgres:15
+    image: postgis/postgis:15-3.3  # PostGIS 포함된 이미지로 변경
     container_name: gotothemarket-db
     environment:
       POSTGRES_DB: gotothemarket
@@ -29,8 +30,9 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d  # 초기화 스크립트용
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d gotothemarket"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -40,6 +42,7 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
 
 networks:
   app-network:
