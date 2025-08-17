@@ -12,6 +12,8 @@ import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.Set;
+import java.util.HashSet;
 
 @Service
 public class RecommendService {
@@ -39,6 +41,7 @@ public class RecommendService {
         double refLng = entrance.getX();
 
         List<CourseResponse.Course> picked = new ArrayList<>();
+        Set<Integer> seenStoreIds = new HashSet<>();
 
         // 2) 업종 세트별 후보 가게 1곳 선별
         for (int i = 0; i < req.getSets().size(); i++) {
@@ -51,6 +54,11 @@ public class RecommendService {
             TopStoreDto top = recommendRepository
                     .pickTopStoreByLabels(req.getMarketId(), set.getStoreType(), labels);
             if (top == null) continue;
+
+            int sid = top.getStoreId();
+            if (seenStoreIds.contains(sid)) {
+                continue; // 이미 추천된 가게는 스킵
+            }
 
             // 3) 가게 좌표 조회 (Store.storeCoord: Point)
             var locOpt = storeRepository.findLocById(top.getStoreId());
@@ -73,6 +81,7 @@ public class RecommendService {
                     new CourseResponse.GeoPoint("Point", new double[]{lng, lat}),
                     distance
             ));
+            seenStoreIds.add(sid);
         }
 
         // 4) 거리 오름차순 정렬 + order 재부여(1부터)
