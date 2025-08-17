@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface VibeRepository extends JpaRepository<Vibe, Integer> {
     Optional<Vibe> findByLabelCode(String labelCode);
+    Optional<Vibe> findByVibeName(String vibeName);
 }
