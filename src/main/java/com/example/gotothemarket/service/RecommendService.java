@@ -6,6 +6,9 @@ import com.example.gotothemarket.dto.TopStoreDto;
 import com.example.gotothemarket.entity.Vibe;
 import com.example.gotothemarket.repository.RecommendRepository;
 import com.example.gotothemarket.repository.VibeRepository;
+import com.example.gotothemarket.repository.StoreRepository;
+import com.example.gotothemarket.repository.MarketRepository;
+import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,38 +18,91 @@ public class RecommendService {
 
     private final RecommendRepository recommendRepository;
     private final VibeRepository vibeRepository;
+    private final StoreRepository storeRepository;
+    private final MarketRepository marketRepository;
 
-    public RecommendService(RecommendRepository recommendRepository, VibeRepository vibeRepository) {
+    public RecommendService(RecommendRepository recommendRepository,
+                            VibeRepository vibeRepository,
+                            StoreRepository storeRepository,
+                            MarketRepository marketRepository) {
         this.recommendRepository = recommendRepository;
         this.vibeRepository = vibeRepository;
+        this.storeRepository = storeRepository;
+        this.marketRepository = marketRepository;
     }
 
     public CourseResponse recommendCourses(CourseRequest req) {
-        List<CourseResponse.Course> courses = new ArrayList<>();
+        // 1) 시장 정문 좌표(Point) 조회: X=lng, Y=lat
+        Point entrance = marketRepository.findEntranceCoord(req.getMarketId())
+                .orElseThrow(() -> new IllegalArgumentException("시장 정보를 찾을 수 없습니다: " + req.getMarketId()));
+        double refLat = entrance.getY();
+        double refLng = entrance.getX();
 
+        List<CourseResponse.Course> picked = new ArrayList<>();
+
+        // 2) 업종 세트별 후보 가게 1곳 선별
         for (int i = 0; i < req.getSets().size(); i++) {
             var set = req.getSets().get(i);
 
-            // 1) 키워드 → label_code 로 유연 매핑
+            // 키워드 → label_code 매핑
             List<String> labels = toLabelCodes(set.getKeywords());
-            if (labels.isEmpty()) continue; // 매칭 실패 시 스킵(원하시면 400 처리로 바꿔도 됩니다)
+            if (labels.isEmpty()) continue; // 매칭 실패 시 스킵(필요 시 400 처리)
 
-            // 2) 시장 + 업종에서 labels의 ratio 합이 최대인 가게 1곳
             TopStoreDto top = recommendRepository
                     .pickTopStoreByLabels(req.getMarketId(), set.getStoreType(), labels);
+            if (top == null) continue;
 
-            if (top != null) {
-                courses.add(new CourseResponse.Course(
-                        i + 1,
-                        top.getStoreId(),
-                        top.getStoreName(),
-                        top.getStoreType(),
-                        set.getKeywords() // 사용자가 요청한 원문 키워드 그대로 반환
-                ));
-            }
+            // 3) 가게 좌표 조회 (Store.storeCoord: Point)
+            var locOpt = storeRepository.findLocById(top.getStoreId());
+            if (locOpt.isEmpty()) continue;
+            var loc = locOpt.get();
+            Point p = loc.getStoreCoord();
+            if (p == null) continue;
+
+            double lat = p.getY();
+            double lng = p.getX();
+            long distance = Math.round(haversineMeters(refLat, refLng, lat, lng));
+
+            // ★ 응답 Course에 좌표/거리 포함 (coord=GeoJSON Point, distance_m 포함)
+            picked.add(new CourseResponse.Course(
+                    0, // 정렬 후 재부여
+                    top.getStoreId(),
+                    top.getStoreName(),
+                    top.getStoreType(),
+                    set.getKeywords(),
+                    new CourseResponse.GeoPoint("Point", new double[]{lng, lat}),
+                    distance
+            ));
         }
 
-        return new CourseResponse(true, 200, new CourseResponse.Data(courses));
+        // 4) 거리 오름차순 정렬 + order 재부여(1부터)
+        picked.sort(Comparator.comparingLong(CourseResponse.Course::distanceM));
+        List<CourseResponse.Course> ordered = new ArrayList<>();
+        for (int i = 0; i < picked.size(); i++) {
+            var c = picked.get(i);
+            ordered.add(new CourseResponse.Course(
+                    i + 1,
+                    c.storeId(),
+                    c.storeName(),
+                    c.storeType(),
+                    c.keywords(),
+                    c.coord(),
+                    c.distanceM()
+            ));
+        }
+
+        return new CourseResponse(true, 200, new CourseResponse.Data(ordered));
+    }
+
+    private static double haversineMeters(double lat1, double lng1, double lat2, double lng2) {
+        double R = 6371000.0; // meters
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     /** 문장/label_code/숫자코드(101 등)를 모두 label_code로 변환 */
