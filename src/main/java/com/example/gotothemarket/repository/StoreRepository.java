@@ -44,4 +44,6 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
             "LEFT JOIN FETCH s.photos p " +
             "WHERE s.storeId = :storeId")
     Optional<Store> findStoreWithPhotosById(@Param("storeId") Integer storeId);
+
+    int countByMember_MemberId(Integer memberId);
 }

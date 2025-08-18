@@ -25,6 +25,9 @@ public class Member {
     @Column(name = "nickname", length = 50, nullable = false)
     private String nickname;
 
+    @Column(name = "attached_badge_id")
+    private Integer attachedBadgeId;   // ← int + length 제거, null 허용
+
     // Store와의 1:N 관계 (한 명의 회원이 여러 상점 소유 가능)
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
