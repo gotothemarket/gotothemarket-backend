@@ -22,7 +22,7 @@ public class Photo {
     private Integer photoId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
+    @JoinColumn(name = "member_id", nullable = true)  // nullable = true 추가
     private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -41,12 +41,11 @@ public class Photo {
         createdAt = LocalDateTime.now();
     }
 
-    // 비즈니스 메서드
+    // 비즈니스 메서드들은 그대로 유지
     public void updatePhotoUrl(String newPhotoUrl) {
         this.photoUrl = newPhotoUrl;
     }
 
-    // URL 유효성 간단 체크
     public boolean isValidUrl() {
         return photoUrl != null &&
                 (photoUrl.startsWith("http://") ||
@@ -54,7 +53,6 @@ public class Photo {
                         photoUrl.startsWith("/uploads/"));
     }
 
-    // 파일 확장자 체크 (이미지 파일인지)
     public boolean isImageFile() {
         if (photoUrl == null) return false;
         String lowerUrl = photoUrl.toLowerCase();
@@ -65,7 +63,6 @@ public class Photo {
                 lowerUrl.endsWith(".webp");
     }
 
-    // 파일명 추출
     public String getFileName() {
         if (photoUrl == null) return null;
         int lastSlash = photoUrl.lastIndexOf('/');
