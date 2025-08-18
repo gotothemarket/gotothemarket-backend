@@ -1,5 +1,6 @@
 package com.example.gotothemarket.service;
 
+import com.example.gotothemarket.dto.HomeResponseDTO;
 import com.example.gotothemarket.entity.*;
 import com.example.gotothemarket.repository.MarketRepository;
 import com.example.gotothemarket.repository.StoreRepository;
@@ -256,6 +257,33 @@ public class StoreService {
                         .createdAt(review.getCreatedAt())
                         .build())
                 .collect(Collectors.toList());
+    }
+    @Transactional(readOnly = true)
+    public HomeResponseDTO getHomeData() {
+        // Store 좌표 데이터 가져오기
+        List<StoreRepository.StoreCoordProjection> storeProjections = storeRepository.findAllStoreCoords();
+        List<HomeResponseDTO.StoreCoordData> stores = storeProjections.stream()
+                .map(projection -> HomeResponseDTO.StoreCoordData.builder()
+                        .storeId(projection.getStoreId())
+                        .latitude(projection.getLatitude())
+                        .longitude(projection.getLongitude())
+                        .build())
+                .collect(Collectors.toList());
+
+        // Market 좌표 데이터 가져오기
+        List<MarketRepository.MarketCoordProjection> marketProjections = marketRepository.findAllMarketCoords();
+        List<HomeResponseDTO.MarketCoordData> markets = marketProjections.stream()
+                .map(projection -> HomeResponseDTO.MarketCoordData.builder()
+                        .marketId(projection.getMarketId())
+                        .latitude(projection.getLatitude())
+                        .longitude(projection.getLongitude())
+                        .build())
+                .collect(Collectors.toList());
+
+        return HomeResponseDTO.builder()
+                .stores(stores)
+                .markets(markets)
+                .build();
     }
 
     // BadgeInfo 생성 (Member의 대표 뱃지 하나만 반환)
