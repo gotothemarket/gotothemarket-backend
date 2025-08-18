@@ -17,7 +17,6 @@ public class StoreDTO {
     @AllArgsConstructor
     public static class StoreRequestDTO {
         private Integer memberId;
-        private Integer marketId;
         private Integer storeType;
         private String storeName;
         private String address;
@@ -90,6 +89,16 @@ public class StoreDTO {
         private Integer photoId;
         private String photoUrl;
         private LocalDateTime createdAt;
+    }
+
+    //사진 등록
+    @Getter
+    @Builder
+    public static class PhotoUploadResponse {
+        private Integer photoId;
+        private String photoUrl;
+        private String message;
+        private LocalDateTime uploadedAt;
     }
 
     // 리뷰 별점, 갯수

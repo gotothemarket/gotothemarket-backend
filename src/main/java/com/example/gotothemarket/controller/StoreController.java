@@ -5,8 +5,10 @@ import com.example.gotothemarket.dto.StoreDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/stores")
@@ -39,4 +41,16 @@ public class StoreController {
         StoreDTO.StoreDetailResponse response = storeService.updateStore(storeId, updateDTO);
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "가게 사진 업로드")
+    @PostMapping(value = "/{storeId}/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<StoreDTO.PhotoUploadResponse> uploadStorePhoto(
+            @PathVariable Integer storeId,
+            @RequestParam("file") MultipartFile file) {
+
+        StoreDTO.PhotoUploadResponse response = storeService.uploadStorePhoto(storeId, file);
+        return ResponseEntity.ok(response);
+    }
+
+
 }

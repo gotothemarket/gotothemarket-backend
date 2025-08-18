@@ -40,54 +40,9 @@ public class Member {
     @Builder.Default
     private List<Favorite> favorites = new ArrayList<>();
 
-    // Photo와의 1:N 관계 (한 명의 회원이 여러 사진 업로드 가능)
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<Photo> photos = new ArrayList<>();
-
     // Badge와의 1:N 관계 (한 명의 회원이 여러 배지 보유 가능)
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Badge> badges = new ArrayList<>();
 
-    // 비즈니스 메서드
-    public void updateNickname(String newNickname) {
-        this.nickname = newNickname;
-    }
-
-    // 상점 추가
-    public void addStore(Store store) {
-        this.stores.add(store);
-    }
-
-    // 리뷰 추가
-    public void addReview(Review review) {
-        this.reviews.add(review);
-    }
-
-    // 즐겨찾기 추가
-    public void addFavorite(Favorite favorite) {
-        this.favorites.add(favorite);
-    }
-
-    // 사진 추가
-    public void addPhoto(Photo photo) {
-        this.photos.add(photo);
-    }
-
-    // 배지 추가
-    public void addBadge(Badge badge) {
-        this.badges.add(badge);
-    }
-
-    // 배지 개수 조회
-    public int getBadgeCount() {
-        return badges.size();
-    }
-
-    // 특정 배지 보유 여부 확인
-    public boolean hasBadge(String badgeName) {
-        return badges.stream()
-                .anyMatch(badge -> badge.getBadgeName().equals(badgeName));
-    }
 }
