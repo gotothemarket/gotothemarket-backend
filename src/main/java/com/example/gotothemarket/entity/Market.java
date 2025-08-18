@@ -32,6 +32,9 @@ public class Market {
     @Column(name = "market_coord", columnDefinition = "geometry(Point,4326)")
     private Point marketCoord;
 
+    @Column(name = "market_entrance_coord", columnDefinition = "geometry(Point,4326)")
+    private Point marketEntranceCoord;
+
     @Column(name = "opening_years", nullable = true)
     private Integer openingYears;
 

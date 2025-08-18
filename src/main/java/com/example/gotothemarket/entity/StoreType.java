@@ -44,4 +44,8 @@ public class StoreType {
     public int getStoreCount() {
         return stores.size();
     }
+
+    public Integer getStoreType() {
+        return this.storeTypeId;
+    }
 }
