@@ -32,13 +32,14 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
     Optional<Store> findStoreWithBasicDetailsById(@Param("storeId") Integer storeId);
 
     // 리뷰와 함께 조회
-    @Query("SELECT s FROM Store s " +
-            "LEFT JOIN FETCH s.reviews r " +
-            "LEFT JOIN FETCH r.member rm " +
-            "LEFT JOIN FETCH rm.badges " +
-            "WHERE s.storeId = :storeId")
+    @Query("""
+       SELECT s
+       FROM Store s
+       LEFT JOIN FETCH s.reviews r
+       LEFT JOIN FETCH r.member rm
+       WHERE s.storeId = :storeId
+       """)
     Optional<Store> findStoreWithReviewsById(@Param("storeId") Integer storeId);
-
     // 사진과 함께 조회
     @Query("SELECT s FROM Store s " +
             "LEFT JOIN FETCH s.photos p " +

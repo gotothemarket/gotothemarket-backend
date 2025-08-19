@@ -3,7 +3,9 @@ package com.example.gotothemarket.service;
 import com.example.gotothemarket.dto.MyPageResponse;
 import com.example.gotothemarket.entity.Badge;
 import com.example.gotothemarket.entity.Member;
+import com.example.gotothemarket.entity.UserBadge;
 import com.example.gotothemarket.repository.*;
+import com.example.gotothemarket.repository.UserBadgeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,15 +20,18 @@ public class MyPageService {
     private final StoreRepository storeRepository;
     private final ReviewRepository reviewRepository;
     private final BadgeRepository badgeRepository;
+    private final UserBadgeRepository userBadgeRepository;
 
     public MyPageService(MemberRepository memberRepository,
                          StoreRepository storeRepository,
                          ReviewRepository reviewRepository,
-                         BadgeRepository badgeRepository) {
+                         BadgeRepository badgeRepository,
+                         UserBadgeRepository userBadgeRepository) {
         this.memberRepository = memberRepository;
         this.storeRepository = storeRepository;
         this.reviewRepository = reviewRepository;
         this.badgeRepository = badgeRepository;
+        this.userBadgeRepository = userBadgeRepository;
     }
 
     public MyPageResponse getMyPage(Integer memberId){
@@ -35,16 +40,22 @@ public class MyPageService {
 
         int storeCnt  = storeRepository.countByMember_MemberId(memberId);
         int reviewCnt = reviewRepository.countByMember_MemberId(memberId);
-        int badgeCnt  = badgeRepository.countByMember_MemberId(memberId);
+        // 사용자 보유(획득) 뱃지 수: acquired=true만 카운트
+        List<UserBadge> userBadges = userBadgeRepository.findByMemberId(memberId);
+        int badgeCnt = (int) userBadges.stream().filter(UserBadge::isAcquired).count();
 
-        // 장착 배지 1개만 노출(없으면 빈 배열)
-        List<Badge> badges = badgeRepository.findByMember_MemberId(memberId);
-        Optional<Badge> attached = Optional.empty();
-        if (m.getAttachedBadgeId() != null) {
-            attached = badges.stream()
-                    .filter(b -> b.getBadgeId().equals(m.getAttachedBadgeId()))
-                    .findFirst();
+        // 장착된 배지 1개만 노출: user_badge.equipped=true 우선, 없으면 member.attachedBadgeId 사용
+        Optional<Integer> attachedBadgeIdOpt = userBadges.stream()
+                .filter(UserBadge::isEquipped)
+                .map(ub -> ub.getBadgeId().intValue())
+                .findFirst();
+
+        if (attachedBadgeIdOpt.isEmpty() && m.getAttachedBadgeId() != null) {
+            attachedBadgeIdOpt = Optional.of(m.getAttachedBadgeId());
         }
+
+        Optional<Badge> attached = attachedBadgeIdOpt
+                .flatMap(id -> badgeRepository.findById(id));
 
         var badgeItems = attached
                 .map(b -> List.of(new MyPageResponse.BadgeItem(

@@ -6,6 +6,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Badge 카탈로그 엔티티 (회원과 무관한 공용 정의)
+ *
+ * 회원별 보유/장착 상태는 UserBadge에서 관리합니다.
+ */
 @Entity
 @Table(name = "badge")
 @Getter
@@ -14,25 +19,24 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Badge {
 
+    /**
+     * 카탈로그용 고정 ID (마이그레이션/시드 SQL로 주입)
+     * IDENTITY를 제거하여 애플리케이션에서 임의 생성하지 않도록 함.
+     */
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "badge_id")
     private Integer badgeId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
 
     @Column(name = "badge_name", length = 100, nullable = false)
     private String badgeName;
 
-    @Column(name = "badge_info", length = 255, nullable = true)
+    @Column(name = "badge_info", length = 255)
     private String badgeInfo;
 
-    @Column(name = "badge_icon", length = 255, nullable = true)
+    @Column(name = "badge_icon", length = 255)
     private String badgeIcon;
 
-    // 비즈니스 메서드
+    // ==== 비즈니스 메서드 ====
     public void updateBadgeInfo(String newBadgeInfo) {
         this.badgeInfo = newBadgeInfo;
     }
@@ -41,17 +45,14 @@ public class Badge {
         this.badgeIcon = newBadgeIcon;
     }
 
-    // 배지 정보가 있는지 확인
     public boolean hasBadgeInfo() {
         return badgeInfo != null && !badgeInfo.trim().isEmpty();
     }
 
-    // 배지 아이콘이 있는지 확인
     public boolean hasBadgeIcon() {
         return badgeIcon != null && !badgeIcon.trim().isEmpty();
     }
 
-    // 표시용 문자열 생성
     public String getDisplayText() {
         if (hasBadgeInfo()) {
             return String.format("%s - %s", badgeName, badgeInfo);
@@ -59,12 +60,13 @@ public class Badge {
         return badgeName;
     }
 
-    // 정적 팩토리 메서드 - 배지 생성
-    public static Badge createBadge(Member member, String badgeName, String badgeInfo) {
+    // 정적 팩토리 (카탈로그 정의 편의)
+    public static Badge of(Integer badgeId, String badgeName, String badgeInfo, String badgeIcon) {
         return Badge.builder()
-                .member(member)
+                .badgeId(badgeId)
                 .badgeName(badgeName)
                 .badgeInfo(badgeInfo)
+                .badgeIcon(badgeIcon)
                 .build();
     }
 }
