@@ -2,15 +2,15 @@ package com.example.gotothemarket.controller;
 
 
 import com.example.gotothemarket.dto.MarketDetailResponse;
+import com.example.gotothemarket.dto.MarketDto;
 import com.example.gotothemarket.entity.Market;
 import com.example.gotothemarket.service.MarketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/markets")
@@ -24,4 +24,18 @@ public class MarketController {
         MarketDetailResponse market = marketService.getMarketDetail(marketId);
         return ResponseEntity.ok(market);
     }
+
+    @GetMapping("/nearest")
+    public ResponseEntity<?> getNearestMarket(
+            @RequestParam double lat,
+            @RequestParam double lng) {
+
+        MarketDto market = marketService.findNearestMarket(lat, lng);
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "status", 200,
+                "data", market
+        ));
+    }
+
 }
