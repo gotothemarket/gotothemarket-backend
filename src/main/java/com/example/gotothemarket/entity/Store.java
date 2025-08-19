@@ -74,6 +74,7 @@ public class Store {
     // Photo와의 1:N 관계 (한 상점에 여러 사진)
     @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
+    @OrderBy("photoId DESC")
     private List<Photo> photos = new ArrayList<>();
 
     // Favorite와의 1:N 관계 (한 상점에 여러 즐겨찾기)

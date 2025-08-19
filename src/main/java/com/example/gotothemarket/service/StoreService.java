@@ -1,10 +1,8 @@
 package com.example.gotothemarket.service;
 
+import com.example.gotothemarket.dto.HomeResponseDTO;
 import com.example.gotothemarket.entity.*;
-import com.example.gotothemarket.repository.MarketRepository;
-import com.example.gotothemarket.repository.StoreRepository;
-import com.example.gotothemarket.repository.FavoriteRepository;
-import com.example.gotothemarket.repository.PhotoRepository;
+import com.example.gotothemarket.repository.*;
 import com.example.gotothemarket.dto.StoreDTO;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
@@ -17,7 +15,6 @@ import jakarta.persistence.PersistenceContext;
 import com.example.gotothemarket.service.BadgeService;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +28,7 @@ public class StoreService {
     private final BadgeService badgeService;
     private final PhotoRepository photoRepository;
     private final MarketRepository marketRepository;
+    private final StoreTypeRepository storeTypeRepository;
     private final GeometryFactory geometryFactory = new GeometryFactory();
     private final S3Service s3Service;
 
@@ -39,6 +37,11 @@ public class StoreService {
 
     // POST
     public StoreDTO.StoreResponseDTO createStore(StoreDTO.StoreRequestDTO dto) {
+
+        // StoreType 조회
+        StoreType storeType = storeTypeRepository.findById(dto.getStoreType())
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 상점 타입입니다. ID: " + dto.getStoreType()));
+
         //가장 가까운 시장 찾기
         Market nearestMarket = marketRepository.findNearestMarket(
                 dto.getStoreCoord().getLat(),
@@ -56,7 +59,7 @@ public class StoreService {
         Store store = Store.builder()
                 .member(createTempMember())
                 .market(nearestMarket) //가장 가까운 시장
-                .storeType(createTempStoreType())
+                .storeType(storeType)
                 .storeName(dto.getStoreName())
                 .address(dto.getAddress())
                 .storeCoord(storeCoord)
@@ -278,6 +281,35 @@ public class StoreService {
                         .build())
                 .collect(Collectors.toList());
     }
+    @Transactional(readOnly = true)
+    public HomeResponseDTO getHomeData() {
+        // Store 좌표 데이터 가져오기
+        List<StoreRepository.StoreCoordProjection> storeProjections = storeRepository.findAllStoreCoords();
+        List<HomeResponseDTO.StoreCoordData> stores = storeProjections.stream()
+                .map(projection -> HomeResponseDTO.StoreCoordData.builder()
+                        .storeId(projection.getStoreId())
+                        .latitude(projection.getLatitude())
+                        .longitude(projection.getLongitude())
+                        .storeTypeId(projection.getStoreTypeId())
+                        .storeTypeName(projection.getStoreTypeName())
+                        .build())
+                .collect(Collectors.toList());
+
+        // Market 좌표 데이터 가져오기
+        List<MarketRepository.MarketCoordProjection> marketProjections = marketRepository.findAllMarketCoords();
+        List<HomeResponseDTO.MarketCoordData> markets = marketProjections.stream()
+                .map(projection -> HomeResponseDTO.MarketCoordData.builder()
+                        .marketId(projection.getMarketId())
+                        .latitude(projection.getLatitude())
+                        .longitude(projection.getLongitude())
+                        .build())
+                .collect(Collectors.toList());
+
+        return HomeResponseDTO.builder()
+                .stores(stores)
+                .markets(markets)
+                .build();
+    }
 
     // BadgeInfo 생성 (Member의 대표 뱃지 하나만 반환)
     private StoreDTO.BadgeInfo createBadgeInfo(Member member) {
@@ -308,14 +340,6 @@ public class StoreService {
     //TODO: 멤버, 마켓, 점포 유형 만들면 그거쓰고 지우기
     private Member createTempMember() {
         return Member.builder().memberId(1).build();
-    }
-
-    private Market createTempMarket() {
-        return Market.builder().marketId(1).build();
-    }
-
-    private StoreType createTempStoreType() {
-        return StoreType.builder().storeTypeId(1).build();
     }
 
     private StoreDTO.StoreResponseDTO createResponseDTO(Store savedStore) {

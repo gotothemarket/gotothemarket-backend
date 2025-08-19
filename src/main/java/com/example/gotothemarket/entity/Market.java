@@ -41,20 +41,8 @@ public class Market {
     @Column(name = "opening_cycle", length = 50, nullable = true)
     private String openingCycle;
 
-    @Column(name = "food_store_count", nullable = true)
-    private Integer foodStoreCount;
-
-    @Column(name = "stall_store_count", nullable = true)
-    private Integer stallStoreCount;
-
-    @Column(name = "business_type", length = 100, nullable = true)
-    private String businessType;
-
-    @Column(name = "main_items", length = 255, nullable = true)
-    private String mainItems;
-
-    @Column(name = "market_number", length = 255, nullable = true)
-    private String marketNumber;
+    @Column(name = "store_count", nullable = true)
+    private Integer storeCount;
 
     @Column(name = "transport", length = 255, nullable = true)
     private String transport;
@@ -65,39 +53,19 @@ public class Market {
     @Column(name = "toilet", nullable = true)
     private Boolean toilet;
 
-    @Column(name = "tourism", length = 255, nullable = true)
-    private String tourism;
+    @ElementCollection
+    @CollectionTable(name = "market_main_images", joinColumns = @JoinColumn(name = "market_id"))
+    @Column(name = "image_url")
+    private List<String> marketMainImageUrls = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "market_event_images", joinColumns = @JoinColumn(name = "market_id"))
+    @Column(name = "image_url")
+    private List<String> marketEventImageUrls = new ArrayList<>();
 
     // Store와의 1:N 관계 (한 마켓에 여러 상점)
     @OneToMany(mappedBy = "market", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Store> stores = new ArrayList<>();
-
-    // 비즈니스 메서드
-    public void updateMarketInfo(String name, String address) {
-        this.marketName = name;
-        this.marketAddress = address;
-    }
-
-    public void updateStoreCounts(Integer foodCount, Integer stallCount) {
-        this.foodStoreCount = foodCount;
-        this.stallStoreCount = stallCount;
-    }
-
-    public void updateFacilities(Boolean parking, Boolean toilet) {
-        this.parking = parking;
-        this.toilet = toilet;
-    }
-
-    // 상점 추가
-    public void addStore(Store store) {
-        this.stores.add(store);
-    }
-
-    // 총 상점 수 계산
-    public Integer getTotalStoreCount() {
-        Integer food = (foodStoreCount != null) ? foodStoreCount : 0;
-        Integer stall = (stallStoreCount != null) ? stallStoreCount : 0;
-        return food + stall;
-    }
+    
 }
