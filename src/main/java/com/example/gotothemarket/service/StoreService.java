@@ -1,8 +1,10 @@
 package com.example.gotothemarket.service;
 
 import com.example.gotothemarket.entity.*;
+import com.example.gotothemarket.repository.MarketRepository;
 import com.example.gotothemarket.repository.StoreRepository;
 import com.example.gotothemarket.repository.FavoriteRepository;
+import com.example.gotothemarket.repository.PhotoRepository;
 import com.example.gotothemarket.dto.StoreDTO;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
@@ -13,7 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import com.example.gotothemarket.service.BadgeService;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,13 +29,25 @@ public class StoreService {
     private final StoreRepository storeRepository;
     private final FavoriteRepository favoriteRepository;
     private final BadgeService badgeService;
+    private final PhotoRepository photoRepository;
+    private final MarketRepository marketRepository;
     private final GeometryFactory geometryFactory = new GeometryFactory();
+    private final S3Service s3Service;
 
     @PersistenceContext
     private EntityManager em;
 
     // POST
     public StoreDTO.StoreResponseDTO createStore(StoreDTO.StoreRequestDTO dto) {
+        //가장 가까운 시장 찾기
+        Market nearestMarket = marketRepository.findNearestMarket(
+                dto.getStoreCoord().getLat(),
+                dto.getStoreCoord().getLng()
+        );
+        if (nearestMarket == null) {
+            throw new RuntimeException("주변에 마켓을 찾을 수 없습니다.");
+        }
+        
         Point storeCoord = createPoint(
                 dto.getStoreCoord() != null ? dto.getStoreCoord().getLat() : null,
                 dto.getStoreCoord() != null ? dto.getStoreCoord().getLng() : null
@@ -39,7 +55,7 @@ public class StoreService {
 
         Store store = Store.builder()
                 .member(createTempMember())
-                .market(createTempMarket())
+                .market(nearestMarket) //가장 가까운 시장
                 .storeType(createTempStoreType())
                 .storeName(dto.getStoreName())
                 .address(dto.getAddress())
@@ -118,6 +134,84 @@ public class StoreService {
 
         // 업데이트 후 상세 정보 다시 조회
         return getStoreDetail(updatedStore.getStoreId());
+    }
+
+    //사진 업로드
+    public StoreDTO.PhotoUploadResponse uploadStorePhoto(Integer storeId, MultipartFile file) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new RuntimeException("가게를 찾을 수 없습니다. ID: " + storeId));
+        // 유효성 검사
+        validateImageFile(file);
+        // S3에 파일 업로드
+        String photoUrl = s3Service.uploadFile(file);
+
+        Photo photo = Photo.builder()
+                .store(store)
+                .member(null)
+                .photoUrl(photoUrl)
+                .build();
+
+        Photo savedPhoto = photoRepository.save(photo);
+
+        return StoreDTO.PhotoUploadResponse.builder()
+                .photoId(savedPhoto.getPhotoId())
+                .photoUrl(savedPhoto.getPhotoUrl())
+                .message("사진이 성공적으로 업로드되었습니다.")
+                .uploadedAt(savedPhoto.getCreatedAt())
+                .build();
+    }
+
+    // 두 좌표 간 거리 계산
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371; // 지구 반지름 (km)
+
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c; // 거리 (km)
+    }
+    // 가장 가까운 마켓 찾기
+    private Market findNearestMarket(double storeLat, double storeLng) {
+        List<Market> markets = marketRepository.findAll();
+
+        Market nearestMarket = null;
+        double minDistance = Double.MAX_VALUE;
+
+        for (Market market : markets) {
+            if (market.getMarketCoord() != null) {
+                double marketLat = market.getMarketCoord().getY();
+                double marketLng = market.getMarketCoord().getX();
+
+                double distance = calculateDistance(storeLat, storeLng, marketLat, marketLng);
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestMarket = market;
+                }
+            }
+        }
+
+        return nearestMarket;
+    }
+
+    private void validateImageFile(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new RuntimeException("업로드할 파일이 없습니다.");
+        }
+        // 파일 크기 제한 (예: 10MB)
+        long maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.getSize() > maxSize) {
+            throw new RuntimeException("파일 크기는 10MB를 초과할 수 없습니다.");
+        }
+        // 이미지 파일 형식 검사
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new RuntimeException("이미지 파일만 업로드 가능합니다.");
+        }
     }
 
     // StoreInfo 생성
@@ -208,6 +302,8 @@ public class StoreService {
         }
         return geometryFactory.createPoint(new Coordinate(longitude, latitude));
     }
+
+
 
     //TODO: 멤버, 마켓, 점포 유형 만들면 그거쓰고 지우기
     private Member createTempMember() {

@@ -119,4 +119,5 @@ public class Member {
         return userBadges.stream()
                 .anyMatch(ub -> Boolean.TRUE.equals(ub.isAcquired()) && badgeId.equals(ub.getBadgeId()));
     }
+
 }
