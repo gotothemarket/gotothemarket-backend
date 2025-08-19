@@ -5,6 +5,9 @@ import com.example.gotothemarket.converter.CohereClassifier;
 import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import com.example.gotothemarket.dto.ReviewCreateRequest;
 import com.example.gotothemarket.entity.Member;
 import com.example.gotothemarket.entity.Review;
@@ -59,6 +62,26 @@ public class ReviewService {
         Review saved = reviewRepository.save(review);
         // 리뷰 생성 후 뱃지 지급/업데이트 이벤트
         badgeService.onReviewCreated(saved);
+
+        // ---- 평점 평균/리뷰 수 증분 갱신 ----
+        int oldCnt = (store.getReviewCount() == null) ? 0 : store.getReviewCount();
+        BigDecimal oldAvgBD = (store.getAverageRating() == null) ? BigDecimal.ZERO : store.getAverageRating();
+
+        int newCnt = oldCnt + 1;
+
+        // (oldAvg * oldCnt + newRating) / newCnt
+        BigDecimal sum = oldAvgBD.multiply(BigDecimal.valueOf(oldCnt))
+                .add(req.rating() == null ? BigDecimal.ZERO : req.rating());
+        BigDecimal avgBD = sum.divide(BigDecimal.valueOf(newCnt), 1, RoundingMode.HALF_UP);
+
+        // Store 엔티티는 setter가 없으므로 JPQL UPDATE 사용
+        int updated = em.createQuery(
+                "UPDATE Store s SET s.reviewCount = :cnt, s.averageRating = :avg WHERE s.storeId = :id")
+                .setParameter("cnt", newCnt)
+                .setParameter("avg", avgBD)
+                .setParameter("id", store.getStoreId())
+                .executeUpdate();
+        log.info("[store:{}] review_count {} -> {}, average_rating -> {}", store.getStoreId(), oldCnt, newCnt, avgBD);
 
         // ---- 멀티라벨 분석 (Cohere) ----
         double threshold = 0.60; // 기본 임계값. 필요 시 요청으로 받도록 확장 가능

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.locationtech.jts.geom.Point;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,5 +85,11 @@ public class Store {
 
     public String getIconUrl() {
         return this.storeIcon;
+    }
+
+    public void updateReviewStats(int newCount, double newAvg) {
+        this.reviewCount = newCount;
+        this.averageRating = BigDecimal.valueOf(newAvg)
+                .setScale(1, RoundingMode.HALF_UP); // 소수 1자리 등 정책대로
     }
 }
