@@ -12,6 +12,9 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import com.example.gotothemarket.service.BadgeService;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -25,10 +28,14 @@ public class StoreService {
 
     private final StoreRepository storeRepository;
     private final FavoriteRepository favoriteRepository;
+    private final BadgeService badgeService;
     private final PhotoRepository photoRepository;
     private final MarketRepository marketRepository;
     private final GeometryFactory geometryFactory = new GeometryFactory();
     private final S3Service s3Service;
+
+    @PersistenceContext
+    private EntityManager em;
 
     // POST
     public StoreDTO.StoreResponseDTO createStore(StoreDTO.StoreRequestDTO dto) {
@@ -62,6 +69,20 @@ public class StoreService {
                 .build();
 
         Store savedStore = storeRepository.save(store);
+
+        // 1) 가게 집계 테이블(분모/라벨별 분자) 보장
+        initStoreStats(savedStore.getStoreId());
+
+        // 2) 뱃지 자동 지급(가게 등록 관련 조건 평가)
+        try {
+            Integer memberId = (savedStore.getMember() != null) ? savedStore.getMember().getMemberId() : null;
+            if (memberId != null) {
+                badgeService.onStoreCreated(memberId);
+            }
+        } catch (Exception ignore) {
+            // 배지 서비스 미연결/테스트 환경에서도 가게 생성은 진행
+        }
+
         return createResponseDTO(savedStore);
     }
 
@@ -318,5 +339,33 @@ public class StoreService {
                 .storeIcon(savedStore.getStoreIcon())
                 .message("상점이 성공적으로 등록되었습니다!")
                 .build();
+    }
+
+    /**
+     * 신규 가게에 대한 통계 보장:
+     * - store_stat (분모) 1행 보장
+     * - store_vibe_stat (가게 × 모든 라벨) 0으로 초기화된 행 보장
+     */
+    private void initStoreStats(Integer storeId) {
+        if (storeId == null) return;
+
+        // store_stat upsert
+        em.createNativeQuery("""
+            INSERT INTO store_stat (store_id, review_count, keyword_total, last_aggregated)
+            VALUES (:sid, 0, 0.0, now())
+            ON CONFLICT (store_id) DO NOTHING
+        """)
+          .setParameter("sid", storeId)
+          .executeUpdate();
+
+        // store_vibe_stat upsert (모든 라벨 0 초기화)
+        em.createNativeQuery("""
+            INSERT INTO store_vibe_stat (store_id, vibe_id, hit_count, ratio, updated_at)
+            SELECT :sid, v.vibe_id, 0, 0.0, now()
+            FROM vibe v
+            ON CONFLICT (store_id, vibe_id) DO NOTHING
+        """)
+          .setParameter("sid", storeId)
+          .executeUpdate();
     }
 }
