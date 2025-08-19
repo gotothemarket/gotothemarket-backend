@@ -6,25 +6,37 @@ spring:
     name: gotothemarket-app
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/gotothemarket}
+    # Docker Compose에서 환경변수로 설정되므로 기본값만 명시
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/gotothemarket}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:0118}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
-      connection-timeout: 20000
+      connection-timeout: 30000
       idle-timeout: 300000
       max-lifetime: 1200000
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: validate  # 운영환경에서는 validate 사용
-    show-sql: false      # 운영환경에서는 SQL 로그 끄기
+      # Docker Compose에서 환경변수로 override됨 (update)
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+    show-sql: false
     properties:
       hibernate:
         format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
 
 logging:
   level:
@@ -42,3 +54,10 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+
+aws:
+  access-key: ${AWS_ACCESS_KEY_ID}
+  secret-key: ${AWS_SECRET_ACCESS_KEY}
+  region: ${AWS_REGION}
+  s3:
+    bucket: ${AWS_S3_BUCKET}
