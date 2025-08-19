@@ -26,4 +26,10 @@ public class MyPageController {
                                @RequestParam(value = "size", defaultValue = "10") int size) {
         return myPageService.getFavorites(memberId, page, size);
     }
+    @GetMapping("/review")
+    public Object getMyReviews(@RequestParam("memberId") Integer memberId,
+                               @RequestParam(value = "page", defaultValue = "1") int page,
+                               @RequestParam(value = "size", defaultValue = "10") int size) {
+        return myPageService.getMyReviews(memberId, page, size);
+    }
 }

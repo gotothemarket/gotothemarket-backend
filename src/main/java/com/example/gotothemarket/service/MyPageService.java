@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -64,6 +65,34 @@ public class MyPageService {
                         .total(favoritesPage.getTotalElements())
                         .build())
                 .build();
+    }
+
+    // MyPageService.java
+    @Transactional(readOnly = true)
+    public Map<String, Object> getMyReviews(Integer memberId, int page, int size) {
+        int pageIndex = Math.max(page - 1, 0);
+        Pageable pageable = PageRequest.of(pageIndex, size);
+
+        Page<MyReviewProjection> p = reviewRepository.findMyReviews(memberId, pageable);
+
+        List<Map<String, Object>> reviews = p.getContent().stream()
+                .map(row -> Map.<String, Object>of(
+                        "market_name", row.getMarketName(),
+                        "store_name",  row.getStoreName(),
+                        "content",     row.getContent()
+                ))
+                .toList();
+
+        return Map.of(
+                "success", true,
+                "status", 200,
+                "data", Map.of(
+                        "reviews", reviews,
+                        "page", page,
+                        "size", size,
+                        "total", p.getTotalElements()
+                )
+        );
     }
 
     public MyPageResponse getMyPage(Integer memberId){
