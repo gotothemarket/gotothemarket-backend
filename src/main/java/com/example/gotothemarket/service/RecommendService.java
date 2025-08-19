@@ -35,8 +35,10 @@ public class RecommendService {
 
     public CourseResponse recommendCourses(CourseRequest req) {
         // 1) 시장 정문 좌표(Point) 조회: X=lng, Y=lat
-        Point entrance = marketRepository.findEntranceCoord(req.getMarketId())
-                .orElseThrow(() -> new IllegalArgumentException("시장 정보를 찾을 수 없습니다: " + req.getMarketId()));
+        Point entrance = marketRepository.findEntranceCoord(req.getMarketId());
+        if (entrance == null) {
+            throw new IllegalArgumentException("시장 정보를 찾을 수 없습니다: " + req.getMarketId());
+        }
         double refLat = entrance.getY();
         double refLng = entrance.getX();
 
