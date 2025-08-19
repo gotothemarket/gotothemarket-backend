@@ -3,6 +3,7 @@ package com.example.gotothemarket.repository;
 import com.example.gotothemarket.entity.Market;
 import org.locationtech.jts.geom.Point;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,6 +19,7 @@ public interface MarketRepository extends JpaRepository<Market, Integer> {
         Double getLatitude();
         Double getLongitude();
     }
+    // 점포랑 가장 가까운 시장 찾기(market_coord 사용)
     @Query(value = "SELECT * FROM market " +
             "WHERE market_coord IS NOT NULL " +
             "ORDER BY ST_Distance(market_coord, ST_SetSRID(ST_Point(:lng, :lat), 4326)) " +
@@ -39,4 +41,5 @@ public interface MarketRepository extends JpaRepository<Market, Integer> {
 
     @Query("select m from Market m where m.marketId = :id")
     Optional<Market> findBasic(@Param("id") int id);
+
 }

@@ -2,10 +2,7 @@ package com.example.gotothemarket.service;
 
 import com.example.gotothemarket.dto.HomeResponseDTO;
 import com.example.gotothemarket.entity.*;
-import com.example.gotothemarket.repository.MarketRepository;
-import com.example.gotothemarket.repository.StoreRepository;
-import com.example.gotothemarket.repository.FavoriteRepository;
-import com.example.gotothemarket.repository.PhotoRepository;
+import com.example.gotothemarket.repository.*;
 import com.example.gotothemarket.dto.StoreDTO;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
@@ -15,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,11 +24,17 @@ public class StoreService {
     private final FavoriteRepository favoriteRepository;
     private final PhotoRepository photoRepository;
     private final MarketRepository marketRepository;
+    private final StoreTypeRepository storeTypeRepository;
     private final GeometryFactory geometryFactory = new GeometryFactory();
     private final S3Service s3Service;
 
     // POST
     public StoreDTO.StoreResponseDTO createStore(StoreDTO.StoreRequestDTO dto) {
+
+        // StoreType 조회
+        StoreType storeType = storeTypeRepository.findById(dto.getStoreType())
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 상점 타입입니다. ID: " + dto.getStoreType()));
+
         //가장 가까운 시장 찾기
         Market nearestMarket = marketRepository.findNearestMarket(
                 dto.getStoreCoord().getLat(),
@@ -50,7 +52,7 @@ public class StoreService {
         Store store = Store.builder()
                 .member(createTempMember())
                 .market(nearestMarket) //가장 가까운 시장
-                .storeType(createTempStoreType())
+                .storeType(storeType)
                 .storeName(dto.getStoreName())
                 .address(dto.getAddress())
                 .storeCoord(storeCoord)
@@ -267,6 +269,8 @@ public class StoreService {
                         .storeId(projection.getStoreId())
                         .latitude(projection.getLatitude())
                         .longitude(projection.getLongitude())
+                        .storeTypeId(projection.getStoreTypeId())
+                        .storeTypeName(projection.getStoreTypeName())
                         .build())
                 .collect(Collectors.toList());
 
@@ -315,14 +319,6 @@ public class StoreService {
     //TODO: 멤버, 마켓, 점포 유형 만들면 그거쓰고 지우기
     private Member createTempMember() {
         return Member.builder().memberId(1).build();
-    }
-
-    private Market createTempMarket() {
-        return Market.builder().marketId(1).build();
-    }
-
-    private StoreType createTempStoreType() {
-        return StoreType.builder().storeTypeId(1).build();
     }
 
     private StoreDTO.StoreResponseDTO createResponseDTO(Store savedStore) {

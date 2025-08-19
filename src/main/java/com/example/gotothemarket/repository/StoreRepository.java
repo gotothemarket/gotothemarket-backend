@@ -25,6 +25,8 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
         Integer getStoreId();
         Double getLatitude();
         Double getLongitude();
+        Integer getStoreTypeId();
+        String getStoreTypeName();
     }
 
     @Query("select s.storeCoord as storeCoord, s.storeName as storeName, s.storeId as storeId, " +
@@ -54,11 +56,14 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
     Optional<Store> findStoreWithPhotosById(@Param("storeId") Integer storeId);
 
     // Home API용
-    @Query(value = "SELECT store_id as storeId, " +
-            "ST_Y(store_coord) as latitude, " +
-            "ST_X(store_coord) as longitude " +
-            "FROM store " +
-            "WHERE store_coord IS NOT NULL",
+    @Query(value = "SELECT s.store_id as storeId, " +
+            "ST_Y(s.store_coord) as latitude, " +
+            "ST_X(s.store_coord) as longitude, " +
+            "st.store_type as storeTypeId, " +
+            "st.type_name as storeTypeName " +
+            "FROM store s " +
+            "LEFT JOIN store_type st ON s.store_type = st.store_type " +
+            "WHERE s.store_coord IS NOT NULL",
             nativeQuery = true)
     List<StoreCoordProjection> findAllStoreCoords();
 }

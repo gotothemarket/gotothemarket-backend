@@ -24,6 +24,8 @@ public class HomeResponseDTO {
         private Integer storeId;
         private Double latitude;
         private Double longitude;
+        private Integer storeTypeId;
+        private String storeTypeName;
     }
 
     @Getter

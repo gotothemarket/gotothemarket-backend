@@ -11,6 +11,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -58,4 +60,27 @@ public class S3Service {
         }
         return "store-images/" + UUID.randomUUID().toString() + extension;
     }
+    
+    // 시장 대표 사진
+    public List<String> getMarketMainImageUrls(Integer marketId) {
+        List<String> imageUrls = new ArrayList<>();
+        for (int i = 1; i <= 4; i++) {
+            String fileName = String.format("market-images/main/market_%d_main_%d.jpg", marketId, i);
+            String imageUrl = String.format("https://%s.s3.ap-northeast-2.amazonaws.com/%s",
+                    bucketName, fileName);
+            imageUrls.add(imageUrl);
+        }
+        return imageUrls;
+    }
+
+    // 시장 행사 사진
+    public List<String> getMarketEventImageUrls(Integer marketId) {
+        List<String> imageUrls = new ArrayList<>();
+        String fileName = String.format("market-images/event/market_%d_event_1.jpg", marketId);
+        String imageUrl = String.format("https://%s.s3.ap-northeast-2.amazonaws.com/%s",
+                bucketName, fileName);
+        imageUrls.add(imageUrl);
+        return imageUrls;
+    }
+    
 }
