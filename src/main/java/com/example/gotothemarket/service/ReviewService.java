@@ -32,6 +32,7 @@ public class ReviewService {
     private final CohereClassifier cohereClassifier;
     private final VibeRepository vibeRepository;
     private final VibeAggregationService vibeAggregationService;
+    private final BadgeService badgeService;
     @PersistenceContext
     private EntityManager em;
     private static final Long DEMO_USER_ID = 1L;
@@ -56,6 +57,8 @@ public class ReviewService {
                 .build();
 
         Review saved = reviewRepository.save(review);
+        // 리뷰 생성 후 뱃지 지급/업데이트 이벤트
+        badgeService.onReviewCreated(saved);
 
         // ---- 멀티라벨 분석 (Cohere) ----
         double threshold = 0.60; // 기본 임계값. 필요 시 요청으로 받도록 확장 가능
