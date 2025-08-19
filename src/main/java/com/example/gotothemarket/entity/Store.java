@@ -82,4 +82,7 @@ public class Store {
     @Builder.Default
     private List<Favorite> favorites = new ArrayList<>();
 
+    public String getIconUrl() {
+        return this.storeIcon;
+    }
 }
