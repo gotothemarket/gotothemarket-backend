@@ -7,7 +7,7 @@ spring:
 
   datasource:
     # Docker Compose에서 환경변수로 설정되므로 기본값만 명시
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/gotothemarket}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres-dev:5432/gotothemarket}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:0118}
     driver-class-name: org.postgresql.Driver
