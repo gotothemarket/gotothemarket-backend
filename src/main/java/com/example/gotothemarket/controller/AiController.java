@@ -6,12 +6,15 @@ import com.example.gotothemarket.dto.KeywordTypeResponse;
 import com.example.gotothemarket.service.KeywordService;
 import com.example.gotothemarket.service.RecommendService;
 import com.example.gotothemarket.service.BadgeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/ai")
+@Tag(name = "AI", description = "AI API")
 public class AiController {
 
     private final RecommendService recommendService;
@@ -24,6 +27,7 @@ public class AiController {
         this.badgeService = badgeService;
     }
 
+    @Operation(summary = "AI 코스 추천")
     @PostMapping("/courses")
     public ResponseEntity<CourseResponse> recommend(@RequestParam("memberId") Integer memberId,
                                                    @Valid @RequestBody CourseRequest req) {
@@ -37,6 +41,7 @@ public class AiController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "AI 코스 추천 - 타입")
     // 예) /api/ai/type?keyword=과일·야채
     @GetMapping("/type")
     public KeywordTypeResponse getTypes(@RequestParam("keyword") String storeTypeName) {

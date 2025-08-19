@@ -1,6 +1,7 @@
 package com.example.gotothemarket.controller;
 
 import com.example.gotothemarket.service.BadgeService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +14,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/session")
+@Tag(name = "앱 시작", description = "앱 시작 관련 API")
 public class SessionController {
     private final BadgeService badgeService;
 
