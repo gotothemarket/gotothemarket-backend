@@ -29,7 +29,6 @@ public class FavoriteService {
 
         // 기존 즐겨찾기 관계 확인
         Optional<Favorite> existingFavorite = favoriteRepository.findByMemberAndStore(member, store);
-
         if (existingFavorite.isPresent()) {
             // 이미 즐겨찾기에 있으면 제거
             favoriteRepository.delete(existingFavorite.get());

@@ -1,9 +1,12 @@
 package com.example.gotothemarket.repository;
 
 import com.example.gotothemarket.entity.Review;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
 
 public interface ReviewRepository extends JpaRepository<Review, Integer> {
     int countByMember_MemberId(Integer memberId);
@@ -34,4 +37,22 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
             nativeQuery = true
     )
     long countDistinctMarketsReviewed(@Param("memberId") Integer memberId);
+
+    @Query(value = """
+        SELECT m.market_name AS marketName,
+               s.store_name  AS storeName,
+               r.content     AS content
+        FROM review r
+        JOIN store s   ON s.store_id = r.store_id
+        JOIN market m  ON m.market_id = s.market_id
+        WHERE r.member_id = :memberId
+        ORDER BY r.created_at DESC
+        """,
+            countQuery = """
+        SELECT COUNT(*)
+        FROM review r
+        WHERE r.member_id = :memberId
+        """,
+            nativeQuery = true)
+    Page<MyReviewProjection> findMyReviews(@Param("memberId") Integer memberId, Pageable pageable);
 }

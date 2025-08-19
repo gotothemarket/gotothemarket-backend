@@ -3,6 +3,8 @@ package com.example.gotothemarket.repository;
 import com.example.gotothemarket.entity.Favorite;
 import com.example.gotothemarket.entity.Member;
 import com.example.gotothemarket.entity.Store;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -19,4 +21,6 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Integer> {
 
     // 사용자와 상점의 즐겨찾기 삭제
     void deleteByMemberAndStore(Member member, Store store);
+
+    Page<Favorite> findByMember_MemberId(Integer memberId, Pageable pageable);
 }
