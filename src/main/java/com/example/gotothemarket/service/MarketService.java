@@ -1,6 +1,7 @@
 package com.example.gotothemarket.service;
 
 import com.example.gotothemarket.dto.MarketDetailResponse;
+import com.example.gotothemarket.dto.MarketDto;
 import com.example.gotothemarket.entity.Market;
 import com.example.gotothemarket.repository.MarketRepository;
 import com.example.gotothemarket.service.S3Service;
@@ -19,6 +20,11 @@ public class MarketService {
 
     private final MarketRepository marketRepository;
     private final S3Service s3Service;
+
+    public MarketDto findNearestMarket(double lat, double lng) {
+        Market market = marketRepository.findNearestMarket(lat, lng);
+        return new MarketDto(market.getMarketId(), market.getMarketName());
+    }
     
     // S3 이미지 url db에 저장
     public void loadAndSaveMarketImages(Integer marketId) {
