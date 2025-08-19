@@ -67,3 +67,5 @@ out/
 # 환경별 민감한 정보
 application-*.properties
 !application-prod.yml
+
+.env
