@@ -14,5 +14,10 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(false);  // 쿠키/인증 정보는 비허용
+        // Swagger 전용 설정
+        registry.addMapping("/v3/api-docs/**")
+                .allowedOrigins("*");
+        registry.addMapping("/swagger-ui/**")
+                .allowedOrigins("*");
     }
 }

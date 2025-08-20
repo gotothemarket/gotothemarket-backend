@@ -37,6 +37,11 @@ spring:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+    # CORS 관련 설정
+    csrf:
+      enabled: false
+  api-docs:
+    path: /v3/api-docs
 
 logging:
   level:
