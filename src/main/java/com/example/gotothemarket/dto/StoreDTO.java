@@ -143,5 +143,6 @@ public class StoreDTO {
         private String openingHours;
         private String closingHours;
         private String storeIcon;
+        private Integer storeType;
     }
 }

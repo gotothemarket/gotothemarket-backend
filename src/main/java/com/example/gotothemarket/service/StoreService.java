@@ -108,11 +108,18 @@ public class StoreService {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new RuntimeException("상점을 찾을 수 없습니다. ID: " + storeId));
 
+        // StoreType 업데이트 처리
+        StoreType storeType = store.getStoreType();
+        if (updateDTO.getStoreType() != null) {
+            storeType = storeTypeRepository.findById(updateDTO.getStoreType())
+                    .orElseThrow(() -> new RuntimeException("존재하지 않는 상점 타입입니다. ID: " + updateDTO.getStoreType()));
+        }
+
         Store.StoreBuilder builder = Store.builder()
                 .storeId(store.getStoreId())
                 .member(store.getMember())
                 .market(store.getMarket())
-                .storeType(store.getStoreType())
+                .storeType(storeType)
                 .storeName(updateDTO.getStoreName() != null ? updateDTO.getStoreName() : store.getStoreName())
                 .address(updateDTO.getAddress() != null ? updateDTO.getAddress() : store.getAddress())
                 .phoneNumber(updateDTO.getPhoneNumber() != null ? updateDTO.getPhoneNumber() : store.getPhoneNumber())
