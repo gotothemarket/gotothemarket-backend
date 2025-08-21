@@ -54,9 +54,23 @@ public class BadgeService {
     /** 공통 지급 헬퍼 */
     private void grantIfNotAcquired(Integer memberId, Integer badgeId, boolean condition) {
         if (!condition) return;
-        boolean has = userBadgeRepository.findByMemberIdAndBadgeId(memberId, badgeId).isPresent();
-        if (!has) {
-            userBadgeRepository.save(new UserBadge(memberId.longValue(), badgeId.longValue(), true, false));
+
+        var existing = userBadgeRepository.findByMemberIdAndBadgeId(memberId, badgeId);
+
+        // 1) 항상 기존 장착 해제
+        userBadgeRepository.unequipAll(memberId);
+
+        if (existing.isPresent()) {
+            // 이미 row가 있으면 획득 플래그 보정 후 장착
+            var ub = existing.get();
+            if (!ub.isAcquired()) {
+                ub.setAcquired(true);
+            }
+            ub.setEquipped(true);
+            userBadgeRepository.save(ub);
+        } else {
+            // 없으면 새로 생성 + 장착
+            userBadgeRepository.save(new UserBadge(memberId.longValue(), badgeId.longValue(), true, true));
         }
     }
 
