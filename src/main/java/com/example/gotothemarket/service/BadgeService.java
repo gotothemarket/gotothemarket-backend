@@ -28,6 +28,8 @@ public class BadgeService {
     private final PhotoRepository photoRepository;
     private final CourseUsageLogRepository courseUsageLogRepository;
 
+
+    @Transactional(readOnly = true)
     public List<BadgeResponse> getUserBadges(Long memberId) {
         Integer mid = memberId == null ? null : memberId.intValue();
         if (mid == null) throw new IllegalArgumentException("memberId is required");
@@ -40,11 +42,13 @@ public class BadgeService {
         return allBadges.stream()
                 .map(badge -> {
                     UserBadge userBadge = userBadgeMap.get(badge.getBadgeId());
+                    String dbBadgeIcon = badge.getBadgeIcon(); // DB에 저장된 값
+
                     return BadgeResponse.builder()
                             .badgeId(Long.valueOf(badge.getBadgeId()))
                             .badgeName(badge.getBadgeName())
                             .badgeInfo(badge.getBadgeInfo())
-                            .badgeIcon(badge.getBadgeIcon())
+                            .badgeIcon(dbBadgeIcon)
                             .acquired(userBadge != null && userBadge.isAcquired())
                             .equipped(userBadge != null && userBadge.isEquipped())
                             .build();

@@ -66,7 +66,6 @@ public class StoreService {
                 .phoneNumber(dto.getPhoneNumber())
                 .openingHours(dto.getOpeningHours())
                 .closingHours(dto.getClosingHours())
-                .storeIcon(dto.getStoreIcon())
                 .favoriteCheck(false)
                 .reviewCount(0)
                 .build();
@@ -114,6 +113,12 @@ public class StoreService {
             storeType = storeTypeRepository.findById(updateDTO.getStoreType())
                     .orElseThrow(() -> new RuntimeException("존재하지 않는 상점 타입입니다. ID: " + updateDTO.getStoreType()));
         }
+        // 아이콘
+        String storeIconUrl = store.getStoreIcon();
+        if (updateDTO.getStoreType() != null && !updateDTO.getStoreType().equals(store.getStoreType().getStoreTypeId())) {
+            // storeType이 변경된 경우 새로운 아이콘 URL 설정
+            storeIconUrl = s3Service.getStoreTypeIconUrl(storeType.getStoreTypeId());
+        }
 
         Store.StoreBuilder builder = Store.builder()
                 .storeId(store.getStoreId())
@@ -125,7 +130,6 @@ public class StoreService {
                 .phoneNumber(updateDTO.getPhoneNumber() != null ? updateDTO.getPhoneNumber() : store.getPhoneNumber())
                 .openingHours(updateDTO.getOpeningHours() != null ? updateDTO.getOpeningHours() : store.getOpeningHours())
                 .closingHours(updateDTO.getClosingHours() != null ? updateDTO.getClosingHours() : store.getClosingHours())
-                .storeIcon(updateDTO.getStoreIcon() != null ? updateDTO.getStoreIcon() : store.getStoreIcon())
                 .averageRating(store.getAverageRating())
                 .reviewCount(store.getReviewCount())
                 .favoriteCheck(store.getFavoriteCheck());
@@ -237,7 +241,6 @@ public class StoreService {
         Member member = Member.builder().memberId(1).build();
         boolean isFavorite = favoriteRepository.existsByMemberAndStore(member, store);
 
-
         return StoreDTO.StoreInfo.builder()
                 .storeId(store.getStoreId())
                 .memberId(store.getMember() != null ? store.getMember().getMemberId() : null)
@@ -250,7 +253,7 @@ public class StoreService {
                 .phoneNumber(store.getPhoneNumber())
                 .openingHours(store.getOpeningHours())
                 .closingHours(store.getClosingHours())
-                .storeIcon(store.getStoreIcon())
+                .storeIcon(s3Service.getStoreTypeIconUrl(store.getStoreType().getStoreTypeId()))
                 .favoriteCheck(isFavorite)
                 .build();
     }
@@ -367,7 +370,7 @@ public class StoreService {
                 .phoneNumber(savedStore.getPhoneNumber())
                 .openingTime(savedStore.getOpeningHours())
                 .closingTime(savedStore.getClosingHours())
-                .storeIcon(savedStore.getStoreIcon())
+                .storeIcon(s3Service.getStoreTypeIconUrl(savedStore.getStoreType().getStoreTypeId()))
                 .message("상점이 성공적으로 등록되었습니다!")
                 .build();
     }
