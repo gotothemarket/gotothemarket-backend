@@ -82,5 +82,14 @@ public class S3Service {
         imageUrls.add(imageUrl);
         return imageUrls;
     }
+
+    // 가게 종류 아이콘
+    public String getStoreTypeIconUrl(Integer storeTypeId) {
+        if (storeTypeId == null || storeTypeId < 1 || storeTypeId > 8) {
+            return null;
+        }
+        String fileName = String.format("store-type-icons/store_type_%d_icon.png", storeTypeId);
+        return String.format("https://%s.s3.ap-northeast-2.amazonaws.com/%s", bucketName, fileName);
+    }
     
 }

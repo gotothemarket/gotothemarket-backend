@@ -24,7 +24,6 @@ public class StoreDTO {
         private String phoneNumber;
         private String openingHours;
         private String closingHours;
-        private String storeIcon;
     }
 
     // 응답용 DTO

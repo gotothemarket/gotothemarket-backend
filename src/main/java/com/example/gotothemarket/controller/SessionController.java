@@ -30,7 +30,7 @@ public class SessionController {
         data.put("badge_id", 1);           // '용감한 첫 발자국'의 고정 ID
         data.put("badge_name", "용감한 첫 발자국");
         data.put("badge_info", "앱 설치 후 첫 실행 시 자동 지급");
-        data.put("badge_icon", "https://cdn.example.com/badges/1.png");
+        data.put("badge_icon", "https://gotothemarket-bucket.s3.ap-northeast-2.amazonaws.com/badge-icons/badge_1_icon.png");
 
         Map<String, Object> body = new HashMap<>();
         body.put("success", true);
