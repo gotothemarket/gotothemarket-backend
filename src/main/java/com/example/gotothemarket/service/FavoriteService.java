@@ -10,6 +10,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -40,4 +46,27 @@ public class FavoriteService {
             return true; // 추가됨
         }
     }
+
+    @Transactional(readOnly = true)
+    public FavoritePageDto listFavorites(Integer memberId, int page, int size) {
+        if (memberId == null) memberId = 1; // demo default
+        Pageable pageable = PageRequest.of(Math.max(page - 1, 0), Math.max(size, 1));
+
+        Page<Favorite> favPage = favoriteRepository.findByMember_MemberId(memberId, pageable);
+
+        List<FavoriteItemDto> items = favPage.getContent().stream()
+                .map(f -> new FavoriteItemDto(
+                        f.getStore().getStoreId(),                                 // store_id
+                        f.getStore().getMarket() != null ? f.getStore().getMarket().getMarketName() : null,
+                        f.getStore().getStoreName(),
+                        f.getStore().getStoreIcon()
+                ))
+                .toList();
+
+        return new FavoritePageDto(items, page, size, favPage.getTotalElements());
+    }
+
+    // Lightweight DTOs for service -> controller
+    public record FavoriteItemDto(Integer storeId, String marketName, String storeName, String storeIcon) { }
+    public record FavoritePageDto(List<FavoriteItemDto> favorites, int page, int size, long total) { }
 }

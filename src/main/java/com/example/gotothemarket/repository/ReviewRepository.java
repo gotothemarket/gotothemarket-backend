@@ -38,13 +38,16 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
     )
     long countDistinctMarketsReviewed(@Param("memberId") Integer memberId);
 
-    @Query(value = """
-        SELECT m.market_name AS marketName,
-               s.store_name  AS storeName,
-               r.content     AS content
+    @Query(
+            value = """
+        SELECT
+            s.store_id   AS storeId,     -- 추가
+            m.market_name AS marketName,
+            s.store_name  AS storeName,
+            r.content     AS content
         FROM review r
-        JOIN store s   ON s.store_id = r.store_id
-        JOIN market m  ON m.market_id = s.market_id
+        JOIN store  s ON s.store_id = r.store_id
+        JOIN market m ON m.market_id = s.market_id
         WHERE r.member_id = :memberId
         ORDER BY r.created_at DESC
         """,
@@ -53,6 +56,8 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
         FROM review r
         WHERE r.member_id = :memberId
         """,
-            nativeQuery = true)
-    Page<MyReviewProjection> findMyReviews(@Param("memberId") Integer memberId, Pageable pageable);
+            nativeQuery = true
+    )
+    Page<MyReviewProjection> findMyReviews(@Param("memberId") Integer memberId,
+                                           Pageable pageable);
 }

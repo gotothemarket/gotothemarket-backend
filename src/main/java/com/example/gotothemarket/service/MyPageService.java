@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -49,6 +50,7 @@ public class MyPageService {
 
         List<MyPageFavoriteResponse.FavoriteDto> favorites = favoritesPage.getContent().stream()
                 .map(fav -> new MyPageFavoriteResponse.FavoriteDto(
+                        fav.getStore().getStoreId(),
                         fav.getStore().getStoreName(),
                         fav.getStore().getMarket().getMarketName(),
                         fav.getStore().getIconUrl()
@@ -75,12 +77,15 @@ public class MyPageService {
 
         Page<MyReviewProjection> p = reviewRepository.findMyReviews(memberId, pageable);
 
-        List<Map<String, Object>> reviews = p.getContent().stream()
-                .map(row -> Map.<String, Object>of(
-                        "market_name", row.getMarketName(),
-                        "store_name",  row.getStoreName(),
-                        "content",     row.getContent()
-                ))
+        List<LinkedHashMap<String, Object>> reviews = p.getContent().stream()
+                .map(row -> {
+                    var item = new LinkedHashMap<String, Object>();
+                    item.put("store_id",    row.getStoreId());   // null 가능성이 있으면 Optional 처리 or 기본값
+                    item.put("market_name", row.getMarketName());
+                    item.put("store_name",  row.getStoreName());
+                    item.put("content",     row.getContent());
+                    return item;
+                })
                 .toList();
 
         return Map.of(
