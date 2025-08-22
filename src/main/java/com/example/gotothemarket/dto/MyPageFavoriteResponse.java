@@ -28,6 +28,7 @@ public class MyPageFavoriteResponse {
     @AllArgsConstructor
     @Builder
     public static class FavoriteDto {
+        private Integer storeId;
         private String storeName;
         private String marketName;
         private String storeIcon;
