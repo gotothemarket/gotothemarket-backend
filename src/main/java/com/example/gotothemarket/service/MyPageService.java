@@ -29,19 +29,22 @@ public class MyPageService {
     private final BadgeRepository badgeRepository;
     private final UserBadgeRepository userBadgeRepository;
     private final FavoriteRepository favoriteRepository;
+    private final S3Service s3Service;
 
     public MyPageService(MemberRepository memberRepository,
                          StoreRepository storeRepository,
                          ReviewRepository reviewRepository,
                          BadgeRepository badgeRepository,
                          UserBadgeRepository userBadgeRepository,
-                         FavoriteRepository favoriteRepository) {
+                         FavoriteRepository favoriteRepository,
+                         S3Service s3Service) {
         this.memberRepository = memberRepository;
         this.storeRepository = storeRepository;
         this.reviewRepository = reviewRepository;
         this.badgeRepository = badgeRepository;
         this.userBadgeRepository = userBadgeRepository;
         this.favoriteRepository = favoriteRepository;
+        this.s3Service = s3Service;
     }
 
     public MyPageFavoriteResponse getFavorites(Integer memberId, int page, int size) {
@@ -53,7 +56,7 @@ public class MyPageService {
                         fav.getStore().getStoreId(),
                         fav.getStore().getStoreName(),
                         fav.getStore().getMarket().getMarketName(),
-                        fav.getStore().getIconUrl()
+                        s3Service.getStoreTypeIconUrl(fav.getStore().getStoreType().getStoreTypeId())
                 ))
                 .toList();
 

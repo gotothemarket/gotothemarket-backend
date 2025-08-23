@@ -5,6 +5,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collections;
 import java.util.List;
 
 @Repository
@@ -50,5 +51,32 @@ public class RecommendRepositoryImpl implements RecommendRepository {
                 ((Number) r[2]).intValue(),
                 ((Number) r[3]).doubleValue()
         );
+    }
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Override
+    public List<String> findMatchingKeywords(int storeId, List<String> keywords) {
+        if (keywords == null || keywords.isEmpty()) {
+            return List.of();
+        }
+
+        String placeholders = String.join(",", Collections.nCopies(keywords.size(), "?"));
+        String sql = String.format("""
+       SELECT v.label_code 
+       FROM store_vibe_stat svs 
+       JOIN vibe v ON svs.vibe_id = v.vibe_id 
+       WHERE svs.store_id = ? 
+       AND v.label_code IN (%s)
+       """, placeholders);
+
+        var query = entityManager.createNativeQuery(sql);
+        query.setParameter(1, storeId);
+
+        for (int i = 0; i < keywords.size(); i++) {
+            query.setParameter(i + 2, keywords.get(i));
+        }
+
+        return query.getResultList();
     }
 }

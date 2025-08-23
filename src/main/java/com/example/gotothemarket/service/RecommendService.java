@@ -79,7 +79,8 @@ public class RecommendService {
                     top.getStoreId(),
                     top.getStoreName(),
                     top.getStoreType(),
-                    set.getKeywords(),
+                    filterUserSelectedKeywords(set.getKeywords(),
+                            recommendRepository.findMatchingKeywords(top.getStoreId(), labels)),
                     new CourseResponse.GeoPoint("Point", new double[]{lng, lat}),
                     distance
             ));
@@ -114,6 +115,15 @@ public class RecommendService {
                 * Math.sin(dLng / 2) * Math.sin(dLng / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
+    }
+    private List<String> filterUserSelectedKeywords(List<String> userKeywords, List<String> validLabels) {
+        return userKeywords.stream()
+                .filter(userKeyword -> {
+                    String labelCode = toLabelCodes(List.of(userKeyword)).stream()
+                            .findFirst().orElse(null);
+                    return validLabels.contains(labelCode);
+                })
+                .toList();
     }
 
     /** 문장/label_code/숫자코드(101 등)를 모두 label_code로 변환 */
