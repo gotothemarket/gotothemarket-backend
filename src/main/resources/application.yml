@@ -12,10 +12,6 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
-cohere:
-  api-key: ${COHERE_API_KEY}
-  model-id: ${COHERE_MODEL_KEY}
-
 logging:
   level:
     org.springframework.data.jpa.repository.query: INFO

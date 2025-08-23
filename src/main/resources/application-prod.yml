@@ -66,3 +66,7 @@ aws:
   region: ${AWS_REGION}
   s3:
     bucket: ${AWS_S3_BUCKET}
+
+cohere:
+  api-key: ${COHERE_API_KEY}
+  model-id: ${COHERE_CLASSIFY_MODEL_ID}

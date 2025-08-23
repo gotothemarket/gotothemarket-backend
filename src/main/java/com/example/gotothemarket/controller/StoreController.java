@@ -52,5 +52,15 @@ public class StoreController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "가게 사진 삭제")
+    @DeleteMapping("/{storeId}/photo/{photoId}")
+    public ResponseEntity<StoreDTO.PhotoDeleteResponse> deleteStorePhoto(
+            @PathVariable Integer storeId,
+            @PathVariable Integer photoId) {
+
+        StoreDTO.PhotoDeleteResponse response = storeService.deleteStorePhoto(storeId, photoId);
+        return ResponseEntity.ok(response);
+    }
+
 
 }

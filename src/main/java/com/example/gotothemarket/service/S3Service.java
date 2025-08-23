@@ -91,5 +91,31 @@ public class S3Service {
         String fileName = String.format("store-type-icons/store_type_%d_icon.png", storeTypeId);
         return String.format("https://%s.s3.ap-northeast-2.amazonaws.com/%s", bucketName, fileName);
     }
+
+    // 사진 삭제
+    public void deleteFile(String fileUrl) {
+        try {
+            // S3 URL에서 키 추출 (예: https://bucket.s3.region.amazonaws.com/folder/filename.jpg)
+            String key = extractKeyFromUrl(fileUrl);
+
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build();
+
+            s3Client.deleteObject(deleteRequest);
+
+        } catch (Exception e) {
+            throw new RuntimeException("S3 파일 삭제 실패: " + e.getMessage(), e);
+        }
+    }
+
+    private String extractKeyFromUrl(String fileUrl) {
+        // URL에서 S3 키 추출하는 로직
+        if (fileUrl.contains(".amazonaws.com/")) {
+            return fileUrl.substring(fileUrl.indexOf(".amazonaws.com/") + 15);
+        }
+        throw new RuntimeException("유효하지 않은 S3 URL입니다: " + fileUrl);
+    }
     
 }

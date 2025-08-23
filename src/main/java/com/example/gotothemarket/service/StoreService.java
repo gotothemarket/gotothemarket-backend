@@ -12,9 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import com.example.gotothemarket.service.BadgeService;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -228,6 +228,38 @@ public class StoreService {
         }
     }
 
+    public StoreDTO.PhotoDeleteResponse deleteStorePhoto(Integer storeId, Integer photoId) {
+        // 가게 존재 여부 확인
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new RuntimeException("가게를 찾을 수 없습니다. ID: " + storeId));
+
+        // 사진 존재 여부 및 소속 확인
+        Photo photo = photoRepository.findById(photoId)
+                .orElseThrow(() -> new RuntimeException("사진을 찾을 수 없습니다. ID: " + photoId));
+
+        // 해당 사진이 해당 가게의 사진인지 확인
+        if (!photo.getStore().getStoreId().equals(storeId)) {
+            throw new RuntimeException("해당 가게의 사진이 아닙니다.");
+        }
+
+        // S3에서 파일 삭제
+        try {
+            s3Service.deleteFile(photo.getPhotoUrl());
+        } catch (Exception e) {
+            // S3 삭제 실패해도 DB는 삭제 (로그만 남기고 진행)
+            System.err.println("S3 파일 삭제 실패: " + e.getMessage());
+        }
+
+        // DB에서 사진 삭제
+        photoRepository.delete(photo);
+
+        return StoreDTO.PhotoDeleteResponse.builder()
+                .photoId(photoId)
+                .message("사진이 성공적으로 삭제되었습니다.")
+                .deletedAt(LocalDateTime.now())
+                .build();
+    }
+
     // StoreInfo 생성
     private StoreDTO.StoreInfo createStoreInfo(Store store) {
         StoreDTO.StoreCoord coord = null;
@@ -292,9 +324,14 @@ public class StoreService {
                 .collect(Collectors.toList());
     }
     @Transactional(readOnly = true)
-    public HomeResponseDTO getHomeData() {
+    public HomeResponseDTO getHomeData(Integer storeTypeId) {
         // Store 좌표 데이터 가져오기
-        List<StoreRepository.StoreCoordProjection> storeProjections = storeRepository.findAllStoreCoords();
+        List<StoreRepository.StoreCoordProjection> storeProjections;
+        if (storeTypeId != null) {
+            storeProjections = storeRepository.findAllStoreCoordsWithStoreTypeFilter(storeTypeId);
+        } else {
+            storeProjections = storeRepository.findAllStoreCoords();
+        }
         List<HomeResponseDTO.StoreCoordData> stores = storeProjections.stream()
                 .map(projection -> HomeResponseDTO.StoreCoordData.builder()
                         .storeId(projection.getStoreId())

@@ -144,4 +144,13 @@ public class StoreDTO {
         private String storeIcon;
         private Integer storeType;
     }
+
+    // DELETE 응답 DTO
+    @Getter
+    @Builder
+    public static class PhotoDeleteResponse {
+        private Integer photoId;
+        private String message;
+        private LocalDateTime deletedAt;
+    }
 }

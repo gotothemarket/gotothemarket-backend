@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -21,13 +22,13 @@ public class HomeController {
     private final StoreService storeService;
 
     @GetMapping
-    @Operation(summary = "홈 화면 데이터 조회", description = "모든 상점과 마켓의 좌표 정보를 조회합니다.")
+    @Operation(summary = "홈 화면 데이터 조회", description = "모든 상점과 마켓의 좌표 정보를 조회합니다. storeTypeId로 필터링 가능")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
-    public ResponseEntity<HomeResponseDTO> getHomeData() {
-        HomeResponseDTO homeData = storeService.getHomeData();
+    public ResponseEntity<HomeResponseDTO> getHomeData(@RequestParam(value = "storeTypeId", required = false) Integer storeTypeId) {
+        HomeResponseDTO homeData = storeService.getHomeData(storeTypeId);
         return ResponseEntity.ok(homeData);
     }
 }
