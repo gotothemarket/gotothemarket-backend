@@ -46,13 +46,4 @@ public class Favorite {
                 .build();
     }
 
-    // 즐겨찾기 추가된 지 얼마나 되었는지 확인 (일 단위)
-    public long getDaysSinceFavorited() {
-        return java.time.temporal.ChronoUnit.DAYS.between(createdAt.toLocalDate(), LocalDateTime.now().toLocalDate());
-    }
-
-    // 최근 즐겨찾기인지 확인 (7일 이내)
-    public boolean isRecentFavorite() {
-        return getDaysSinceFavorited() <= 7;
-    }
 }

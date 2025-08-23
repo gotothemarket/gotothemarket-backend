@@ -41,31 +41,4 @@ public class Photo {
         createdAt = LocalDateTime.now();
     }
 
-    // 비즈니스 메서드들은 그대로 유지
-    public void updatePhotoUrl(String newPhotoUrl) {
-        this.photoUrl = newPhotoUrl;
-    }
-
-    public boolean isValidUrl() {
-        return photoUrl != null &&
-                (photoUrl.startsWith("http://") ||
-                        photoUrl.startsWith("https://") ||
-                        photoUrl.startsWith("/uploads/"));
-    }
-
-    public boolean isImageFile() {
-        if (photoUrl == null) return false;
-        String lowerUrl = photoUrl.toLowerCase();
-        return lowerUrl.endsWith(".jpg") ||
-                lowerUrl.endsWith(".jpeg") ||
-                lowerUrl.endsWith(".png") ||
-                lowerUrl.endsWith(".gif") ||
-                lowerUrl.endsWith(".webp");
-    }
-
-    public String getFileName() {
-        if (photoUrl == null) return null;
-        int lastSlash = photoUrl.lastIndexOf('/');
-        return lastSlash >= 0 ? photoUrl.substring(lastSlash + 1) : photoUrl;
-    }
 }

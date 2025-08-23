@@ -62,55 +62,6 @@ public class Member {
     @Transient
     private List<Badge> badges = new ArrayList<>();
 
-    // 비즈니스 메서드
-    public void updateNickname(String newNickname) {
-        this.nickname = newNickname;
-    }
-
-    // 상점 추가
-    public void addStore(Store store) {
-        this.stores.add(store);
-    }
-
-    // 리뷰 추가
-    public void addReview(Review review) {
-        this.reviews.add(review);
-    }
-
-    // 즐겨찾기 추가
-    public void addFavorite(Favorite favorite) {
-        this.favorites.add(favorite);
-    }
-
-    // 사진 추가
-    public void addPhoto(Photo photo) {
-        this.photos.add(photo);
-    }
-
-    // 배지 추가
-    public void addBadge(Badge badge) {
-        this.badges.add(badge);
-    }
-
-    // 배지 개수 조회
-    public int getBadgeCount() {
-        // 기존: 카탈로그 Badge 컬렉션 크기
-        // return badges.size();
-        // 변경: 실제 보유(획득)한 UserBadge만 카운트
-        return (int) userBadges.stream()
-                .filter(UserBadge::isAcquired)
-                .count();
-    }
-
-    // 특정 배지 보유 여부 확인
-    public boolean hasBadge(String badgeName) {
-        // 기존(레거시): 카탈로그 Badge 이름으로 판단
-        // return badges.stream().anyMatch(b -> b.getBadgeName().equals(badgeName));
-        // 현재 구조에서는 UserBadge에는 badgeId만 있고 이름은 카탈로그에 있음.
-        // 여기서는 레거시 컬렉션을 유지하되, 실제 보유 판단은 UserBadge 기반의 별도 메서드를 제공.
-        return badges.stream().anyMatch(b -> b.getBadgeName().equals(badgeName));
-    }
-
     /**
      * 실제 보유 여부 확인(배지 ID 기준)
      */

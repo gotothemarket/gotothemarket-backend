@@ -32,23 +32,4 @@ public class VibeType {
     @OneToMany(mappedBy = "vibeType", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Vibe> vibes = new ArrayList<>();
-
-    // 비즈니스 메서드
-    public void updateVibeTypeName(String newVibeTypeName) {
-        this.vibeTypeName = newVibeTypeName;
-    }
-
-    public void updateStoreType(Integer newStoreType) {
-        this.storeType = newStoreType;
-    }
-
-    // 바이브 추가
-    public void addVibe(Vibe vibe) {
-        this.vibes.add(vibe);
-    }
-
-    // 해당 타입의 바이브 수 조회
-    public int getVibeCount() {
-        return vibes.size();
-    }
 }

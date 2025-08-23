@@ -30,21 +30,6 @@ public class StoreType {
     @Builder.Default
     private List<Store> stores = new ArrayList<>();
 
-    // 비즈니스 메서드
-    public void updateTypeName(String newTypeName) {
-        this.typeName = newTypeName;
-    }
-
-    // 상점 추가
-    public void addStore(Store store) {
-        this.stores.add(store);
-    }
-
-    // 해당 타입의 상점 수 조회
-    public int getStoreCount() {
-        return stores.size();
-    }
-
     public Integer getStoreType() {
         return this.storeTypeId;
     }

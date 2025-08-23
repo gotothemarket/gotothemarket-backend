@@ -36,37 +36,4 @@ public class Badge {
     @Column(name = "badge_icon", length = 255)
     private String badgeIcon;
 
-    // ==== 비즈니스 메서드 ====
-    public void updateBadgeInfo(String newBadgeInfo) {
-        this.badgeInfo = newBadgeInfo;
-    }
-
-    public void updateBadgeIcon(String newBadgeIcon) {
-        this.badgeIcon = newBadgeIcon;
-    }
-
-    public boolean hasBadgeInfo() {
-        return badgeInfo != null && !badgeInfo.trim().isEmpty();
-    }
-
-    public boolean hasBadgeIcon() {
-        return badgeIcon != null && !badgeIcon.trim().isEmpty();
-    }
-
-    public String getDisplayText() {
-        if (hasBadgeInfo()) {
-            return String.format("%s - %s", badgeName, badgeInfo);
-        }
-        return badgeName;
-    }
-
-    // 정적 팩토리 (카탈로그 정의 편의)
-    public static Badge of(Integer badgeId, String badgeName, String badgeInfo, String badgeIcon) {
-        return Badge.builder()
-                .badgeId(badgeId)
-                .badgeName(badgeName)
-                .badgeInfo(badgeInfo)
-                .badgeIcon(badgeIcon)
-                .build();
-    }
 }

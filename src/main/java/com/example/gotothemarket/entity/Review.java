@@ -48,27 +48,4 @@ public class Review {
         createdAt = LocalDateTime.now();
     }
 
-    // 비즈니스 메서드
-    public void updateReview(BigDecimal newRating, String newContent) {
-        this.rating = newRating;
-        this.content = newContent;
-    }
-
-    public void updateContent(String newContent) {
-        this.content = newContent;
-    }
-
-    public void updateRating(BigDecimal newRating) {
-        this.rating = newRating;
-    }
-
-    // 평점이 높은지 확인 (4.0 이상)
-    public boolean isHighRating() {
-        return rating.compareTo(new BigDecimal("4.0")) >= 0;
-    }
-
-    // 리뷰 내용이 있는지 확인
-    public boolean hasContent() {
-        return content != null && !content.trim().isEmpty();
-    }
 }
