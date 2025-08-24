@@ -68,4 +68,6 @@ out/
 application-*.properties
 !application-prod.yml
 
+.envenv
 .env
+*.env
