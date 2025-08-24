@@ -80,7 +80,7 @@ public class RecommendService {
                     top.getStoreName(),
                     top.getStoreType(),
                     filterUserSelectedKeywords(set.getKeywords(),
-                            recommendRepository.findMatchingKeywords(top.getStoreId(), labels)),
+                            recommendRepository.findPositiveLabelCodes(top.getStoreId(), labels)),
                     new CourseResponse.GeoPoint("Point", new double[]{lng, lat}),
                     distance
             ));
@@ -126,7 +126,11 @@ public class RecommendService {
                 .toList();
     }
 
-    /** 문장/label_code/숫자코드(101 등)를 모두 label_code로 변환 */
+    /**
+     * 문장/label_code/숫자코드(101 등)를 모두 label_code로 변환
+     * <p>
+     * Note: Filtering by positive labels (hit_count > 0 or ratio > 0) is done in repository.
+     */
     private List<String> toLabelCodes(List<String> keywords) {
         if (keywords == null || keywords.isEmpty()) return List.of();
 

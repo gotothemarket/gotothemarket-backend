@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 public class RecommendRepositoryImpl implements RecommendRepository {
@@ -52,8 +53,36 @@ public class RecommendRepositoryImpl implements RecommendRepository {
                 ((Number) r[3]).doubleValue()
         );
     }
-    @PersistenceContext
-    private EntityManager entityManager;
+    @Override
+    public List<String> findPositiveLabelCodes(Integer storeId, List<String> labelCodes) {
+        if (storeId == null || labelCodes == null || labelCodes.isEmpty()) return List.of();
+
+        List<String> labels = labelCodes.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .toList();
+        if (labels.isEmpty()) return List.of();
+
+        String sql = """
+        SELECT v.label_code
+        FROM store_vibe_stat svs
+        JOIN vibe v ON v.vibe_id = svs.vibe_id
+        WHERE svs.store_id = ?1
+          AND v.label_code = ANY (?2)
+          AND (svs.hit_count > 0 OR svs.ratio > 0)
+        """;
+        var q = em.createNativeQuery(sql);
+        q.setParameter(1, storeId);
+        q.setParameter(2, labels.toArray(new String[0])); // Postgres ANY(array)
+
+        @SuppressWarnings("unchecked")
+        List<Object> rows = q.getResultList();
+        return rows.stream().map(o -> o != null ? o.toString() : null)
+                .filter(Objects::nonNull)
+                .toList();
+    }
 
     @Override
     public List<String> findMatchingKeywords(int storeId, List<String> keywords) {
@@ -70,7 +99,7 @@ public class RecommendRepositoryImpl implements RecommendRepository {
        AND v.label_code IN (%s)
        """, placeholders);
 
-        var query = entityManager.createNativeQuery(sql);
+        var query = em.createNativeQuery(sql);
         query.setParameter(1, storeId);
 
         for (int i = 0; i < keywords.size(); i++) {
