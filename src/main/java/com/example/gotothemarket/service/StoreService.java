@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +32,7 @@ public class StoreService {
     private final StoreTypeRepository storeTypeRepository;
     private final GeometryFactory geometryFactory = new GeometryFactory();
     private final S3Service s3Service;
+    private final BadgeRepository badgeRepository;
 
     @PersistenceContext
     private EntityManager em;
@@ -359,14 +361,19 @@ public class StoreService {
     }
 
     // BadgeInfo 생성 (Member의 대표 뱃지 하나만 반환)
+    // createBadgeInfo 메소드 수정
     private StoreDTO.BadgeInfo createBadgeInfo(Member member) {
-        if (member == null || member.getBadges() == null || member.getBadges().isEmpty()) {
+        if (member == null || member.getAttachedBadgeId() == null) {
             return null;
         }
 
-        // 지금은 대표 뱃지로 첫 번째 배지를 반환 TODO: 대표뱃지 구현 후 대표뱃지로 하기
-        Badge badge = member.getBadges().get(0);
+        // attached_badge_id로 직접 Badge 조회
+        Optional<Badge> badgeOpt = badgeRepository.findById(member.getAttachedBadgeId());
+        if (badgeOpt.isEmpty()) {
+            return null;
+        }
 
+        Badge badge = badgeOpt.get();
         return StoreDTO.BadgeInfo.builder()
                 .badgeId(badge.getBadgeId())
                 .badgeName(badge.getBadgeName())
