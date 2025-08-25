@@ -1,4 +1,4 @@
-## 발견의 즐거움이 있는 전통시장 탐험, 시장에가면
+## 발견의 즐거움이 있는 전통시장 탐험, 시장에 가면
 
 <a href="www.gotothemarket.site" target="_blank">
 <img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/13acd2dd-1ab7-45f9-89e3-35385a94966f" />
@@ -9,7 +9,7 @@
 
 ## 1. Project Overview (프로젝트 개요)
 
-- 프로젝트 이름: 발견의 즐거움이 있는 전통시장 탐험, 시장에가면
+- 프로젝트 이름: 발견의 즐거움이 있는 전통시장 탐험, 시장에 가면
 - 프로젝트 설명: 전통시장의 가게들을 제보하고 후기를 남기며 공유하는 모두를 위한 전통시장 커뮤니티
 
 <br/>
