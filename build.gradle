@@ -40,6 +40,10 @@ dependencies {
 	implementation 'software.amazon.awssdk:auth:2.20.56'
 	implementation 'software.amazon.awssdk:regions:2.20.56'
 
+	//Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'

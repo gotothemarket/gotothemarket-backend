@@ -9,7 +9,9 @@ import com.example.gotothemarket.repository.VibeRepository;
 import com.example.gotothemarket.repository.StoreRepository;
 import com.example.gotothemarket.repository.MarketRepository;
 import org.locationtech.jts.geom.Point;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.Set;
@@ -33,6 +35,8 @@ public class RecommendService {
         this.marketRepository = marketRepository;
     }
 
+    @Cacheable(value = "recommendations", key = "#req.marketId + '-' + #req.sets.hashCode()")
+    @Transactional(readOnly = true)
     public CourseResponse recommendCourses(CourseRequest req) {
         // 1) 시장 정문 좌표(Point) 조회: X=lng, Y=lat
         Point entrance = marketRepository.findEntranceCoord(req.getMarketId());

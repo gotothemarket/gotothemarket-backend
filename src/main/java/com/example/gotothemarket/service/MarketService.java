@@ -4,7 +4,8 @@ import com.example.gotothemarket.dto.MarketDetailResponse;
 import com.example.gotothemarket.dto.MarketDto;
 import com.example.gotothemarket.entity.Market;
 import com.example.gotothemarket.repository.MarketRepository;
-import com.example.gotothemarket.service.S3Service;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 @Slf4j
 public class MarketService {
 
@@ -27,6 +28,8 @@ public class MarketService {
     }
     
     // S3 이미지 url db에 저장
+    @CacheEvict(value = "market-detail", key = "#marketId")
+    @Transactional
     public void loadAndSaveMarketImages(Integer marketId) {
         // Market 엔티티를 조회
         Market market = marketRepository.findById(marketId)
@@ -55,7 +58,7 @@ public class MarketService {
         }
     }
 
-    @Transactional(readOnly = true)
+    @Cacheable(value = "market-detail", key = "#marketId")
     public MarketDetailResponse getMarketDetail(Integer marketId) {
         Market market = marketRepository.findById(marketId)
                 .orElseThrow(() -> new RuntimeException("시장을 찾을 수 없습니다. ID: " + marketId));

@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
@@ -91,6 +93,7 @@ public class StoreService {
     }
 
     // GET
+    @Cacheable(value = "store-detail", key = "#storeId")
     @Transactional(readOnly = true)
     public StoreDTO.StoreDetailResponse getStoreDetail(Integer storeId) {
         Store store = storeRepository.findStoreWithBasicDetailsById(storeId)
@@ -105,6 +108,7 @@ public class StoreService {
     }
 
     // PATCH
+    @CacheEvict(value = {"store-detail", "home-data"}, allEntries = true)
     public StoreDTO.StoreDetailResponse updateStore(Integer storeId, StoreDTO.StoreUpdateDTO updateDTO) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new RuntimeException("상점을 찾을 수 없습니다. ID: " + storeId));
@@ -325,6 +329,7 @@ public class StoreService {
                         .build())
                 .collect(Collectors.toList());
     }
+    @Cacheable(value = "home-data", key = "#storeTypeId != null ? 'type-' + #storeTypeId : 'all-stores'")
     @Transactional(readOnly = true)
     public HomeResponseDTO getHomeData(Integer storeTypeId) {
         // Store 좌표 데이터 가져오기
