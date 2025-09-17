@@ -29,6 +29,8 @@ public class StoreDTO {
     // 응답용 DTO
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class StoreResponseDTO {
         private Integer storeId;
         private String storeName;
@@ -45,6 +47,8 @@ public class StoreDTO {
     // wrapper DTO
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class StoreDetailResponse {
         private StoreInfo store;
         private List<PhotoInfo> photos;
@@ -55,6 +59,8 @@ public class StoreDTO {
     // 상점 기본 정보 GET용
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class StoreInfo {
         private Integer storeId;
         private Integer memberId;
@@ -84,6 +90,8 @@ public class StoreDTO {
     // 사진 정보
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PhotoInfo {
         private Integer photoId;
         private String photoUrl;
@@ -93,6 +101,8 @@ public class StoreDTO {
     //사진 등록
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PhotoUploadResponse {
         private Integer photoId;
         private String photoUrl;
@@ -103,6 +113,8 @@ public class StoreDTO {
     // 리뷰 별점, 갯수
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ReviewSummary {
         private BigDecimal averageRating;
         private Integer reviewCount;
@@ -111,6 +123,8 @@ public class StoreDTO {
     // 리뷰 정보
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ReviewInfo {
         private Integer reviewId;
         private Integer memberId;
@@ -124,6 +138,8 @@ public class StoreDTO {
     // 배지 정보
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class BadgeInfo {
         private Integer badgeId;
         private String badgeName;
@@ -148,6 +164,8 @@ public class StoreDTO {
     // DELETE 응답 DTO
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PhotoDeleteResponse {
         private Integer photoId;
         private String message;
