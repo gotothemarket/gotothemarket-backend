@@ -30,7 +30,7 @@ public class RedisConfig {
                 .allowIfSubType(Object.class)
                 .build();
 
-        // 타입 정보를 JSON에 포함하도록 설정 (중요!)
+        // 타입 정보를 JSON에 포함하도록 설정
         objectMapper.activateDefaultTyping(
                 typeValidator,
                 ObjectMapper.DefaultTyping.NON_FINAL,

@@ -51,10 +51,19 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
        """)
     Optional<Store> findStoreWithReviewsById(@Param("storeId") Integer storeId);
     // 사진과 함께 조회
-    @Query("SELECT s FROM Store s " +
+    @Query("SELECT DISTINCT s FROM Store s " +
+            "LEFT JOIN FETCH s.member m " +
+            "LEFT JOIN FETCH s.market mk " +
+            "LEFT JOIN FETCH s.storeType st " +
             "LEFT JOIN FETCH s.photos p " +
             "WHERE s.storeId = :storeId")
     Optional<Store> findStoreWithPhotosById(@Param("storeId") Integer storeId);
+
+    @Query("SELECT DISTINCT s FROM Store s " +
+            "LEFT JOIN FETCH s.reviews r " +
+            "LEFT JOIN FETCH r.member rm " +
+            "WHERE s.storeId = :storeId")
+    Optional<Store> findStoreWithReviewsAndMembersById(@Param("storeId") Integer storeId);
 
     // Home API용
     @Query(value = "SELECT s.store_id as storeId, " +
