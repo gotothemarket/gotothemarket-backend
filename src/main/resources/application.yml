@@ -7,7 +7,7 @@ spring:
 
   # 프로파일별 설정은 각각의 파일에서 관리
   profiles:
-    active: prod  # 기본적으로 dev 프로파일 사용하기
+    active: prod #기본적으로 dev 프로파일 사용하기
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect

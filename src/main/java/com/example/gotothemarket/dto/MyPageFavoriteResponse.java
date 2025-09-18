@@ -3,11 +3,13 @@ package com.example.gotothemarket.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class MyPageFavoriteResponse {
     private boolean success;
@@ -17,6 +19,7 @@ public class MyPageFavoriteResponse {
     @Getter
     @AllArgsConstructor
     @Builder
+    @NoArgsConstructor
     public static class Data {
         private List<FavoriteDto> favorites;
         private int page;
@@ -26,6 +29,7 @@ public class MyPageFavoriteResponse {
 
     @Getter
     @AllArgsConstructor
+    @NoArgsConstructor
     @Builder
     public static class FavoriteDto {
         private Integer storeId;

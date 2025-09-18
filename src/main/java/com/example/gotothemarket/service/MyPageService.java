@@ -8,6 +8,7 @@ import com.example.gotothemarket.entity.Member;
 import com.example.gotothemarket.entity.UserBadge;
 import com.example.gotothemarket.repository.*;
 import com.example.gotothemarket.repository.UserBadgeRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +48,7 @@ public class MyPageService {
         this.s3Service = s3Service;
     }
 
+    @Cacheable(value = "favorites", key = "#memberId + '-' + #page + '-' + #size")
     public MyPageFavoriteResponse getFavorites(Integer memberId, int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<Favorite> favoritesPage = favoriteRepository.findByMember_MemberId(memberId, pageable);
@@ -103,6 +105,7 @@ public class MyPageService {
         );
     }
 
+    @Cacheable(value = "my-page", key = "#memberId")
     public MyPageResponse getMyPage(Integer memberId){
         Member m = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다: " + memberId));

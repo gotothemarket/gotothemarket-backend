@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
@@ -15,8 +17,7 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -91,20 +92,87 @@ public class StoreService {
     }
 
     // GET
+    @Cacheable(value = "store-detail", key = "#storeId")
     @Transactional(readOnly = true)
     public StoreDTO.StoreDetailResponse getStoreDetail(Integer storeId) {
-        Store store = storeRepository.findStoreWithBasicDetailsById(storeId)
+        // 1. 기본 상점 정보 조회
+        Store basicStore = storeRepository.findStoreWithBasicDetailsById(storeId)
                 .orElseThrow(() -> new RuntimeException("상점을 찾을 수 없습니다. ID: " + storeId));
 
+        // 2. 사진 정보와 함께 조회 (N+1 방지)
+        Store storeWithPhotos = storeRepository.findStoreWithPhotosById(storeId)
+                .orElse(basicStore);
+
+        // 3. 리뷰와 작성자 정보 함께 조회 (N+1 방지)
+        Store storeWithReviews = storeRepository.findStoreWithReviewsAndMembersById(storeId)
+                .orElse(basicStore);
+
         return StoreDTO.StoreDetailResponse.builder()
-                .store(createStoreInfo(store))
-                .photos(createPhotoInfoList(store.getPhotos()))
-                .reviewSummary(createReviewSummary(store))
-                .reviews(createReviewInfoList(store.getReviews()))
+                .store(createStoreInfo(basicStore))
+                .photos(createPhotoInfoList(storeWithPhotos.getPhotos()))     // ✅ 이미 조회됨
+                .reviewSummary(createReviewSummary(basicStore))
+                .reviews(createReviewInfoListOptimized(storeWithReviews.getReviews())) // ✅ 최적화된 메소드
+                .build();
+    }
+
+    // StoreService.java에 이 메소드를 추가하세요
+    private List<StoreDTO.ReviewInfo> createReviewInfoListOptimized(List<Review> reviews) {
+        if (reviews.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // 1. 모든 멤버의 배지 ID 수집
+        List<Integer> badgeIds = reviews.stream()
+                .map(Review::getMember)
+                .filter(Objects::nonNull)
+                .map(Member::getAttachedBadgeId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 2. 배지 정보 배치 조회
+        Map<Integer, Badge> badgeMap = new HashMap<>();
+        if (!badgeIds.isEmpty()) {
+            List<Badge> badges = badgeRepository.findAllById(badgeIds);
+            badgeMap = badges.stream()
+                    .collect(Collectors.toMap(Badge::getBadgeId, badge -> badge));
+        }
+
+        // 3. 리뷰 정보 생성 (배지는 Map에서 조회)
+        final Map<Integer, Badge> finalBadgeMap = badgeMap;
+        return reviews.stream()
+                .map(review -> StoreDTO.ReviewInfo.builder()
+                        .reviewId(review.getReviewId())
+                        .memberId(review.getMember() != null ? review.getMember().getMemberId() : null)
+                        .memberNickname(review.getMember() != null ? review.getMember().getNickname() : null)
+                        .badge(createBadgeInfoFromMap(review.getMember(), finalBadgeMap)) // ✅ Map에서 조회
+                        .rating(review.getRating())
+                        .content(review.getContent())
+                        .createdAt(review.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    // 배지 정보를 Map에서 가져오는 헬퍼 메소드
+    private StoreDTO.BadgeInfo createBadgeInfoFromMap(Member member, Map<Integer, Badge> badgeMap) {
+        if (member == null || member.getAttachedBadgeId() == null) {
+            return null;
+        }
+
+        Badge badge = badgeMap.get(member.getAttachedBadgeId());
+        if (badge == null) {
+            return null;
+        }
+
+        return StoreDTO.BadgeInfo.builder()
+                .badgeId(badge.getBadgeId())
+                .badgeName(badge.getBadgeName())
+                .badgeIcon(badge.getBadgeIcon())
                 .build();
     }
 
     // PATCH
+    @CacheEvict(value = {"store-detail", "home-data"}, allEntries = true)
     public StoreDTO.StoreDetailResponse updateStore(Integer storeId, StoreDTO.StoreUpdateDTO updateDTO) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new RuntimeException("상점을 찾을 수 없습니다. ID: " + storeId));
@@ -325,6 +393,7 @@ public class StoreService {
                         .build())
                 .collect(Collectors.toList());
     }
+    @Cacheable(value = "home-data", key = "#storeTypeId != null ? 'type-' + #storeTypeId : 'all-stores'")
     @Transactional(readOnly = true)
     public HomeResponseDTO getHomeData(Integer storeTypeId) {
         // Store 좌표 데이터 가져오기

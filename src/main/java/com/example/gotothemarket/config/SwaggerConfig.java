@@ -16,6 +16,10 @@ public class SwaggerConfig {
                         .title("GoToTheMarket API")
                         .version("1.0")
                         .description("전통시장 API"))
+                // 로컬 서버 추가
+                .addServersItem(new Server()
+                        .url("http://localhost:8080")
+                        .description("Local development server"))
                 .addServersItem(new Server()
                         .url("https://api.gotothemarket.site")
                         .description("Production server"));
