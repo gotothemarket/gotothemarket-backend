@@ -35,6 +35,9 @@ public class MarketService {
         Market market = marketRepository.findById(marketId)
                 .orElseThrow(() -> new RuntimeException("시장을 찾을 수 없습니다. ID: " + marketId));
 
+        market.getMarketMainImageUrls().size();
+        market.getMarketEventImageUrls().size();
+
         // S3에서 이미지 URL들 가져오기
         List<String> mainImageUrls = s3Service.getMarketMainImageUrls(marketId);
         List<String> eventImageUrls = s3Service.getMarketEventImageUrls(marketId);
@@ -63,11 +66,17 @@ public class MarketService {
         Market market = marketRepository.findById(marketId)
                 .orElseThrow(() -> new RuntimeException("시장을 찾을 수 없습니다. ID: " + marketId));
 
+        market.getMarketMainImageUrls().size();
+        market.getMarketEventImageUrls().size();
+
         // 이미지 URL들이 비어있다면 S3에서 로드
         if (market.getMarketMainImageUrls().isEmpty() || market.getMarketEventImageUrls().isEmpty()) {
             loadAndSaveMarketImages(marketId);
             // 다시 조회해서 업데이트된 이미지 URL들 가져오기
             market = marketRepository.findById(marketId).get();
+
+            market.getMarketMainImageUrls().size();
+            market.getMarketEventImageUrls().size();
         }
 
         return convertToDetailResponse(market);

@@ -27,6 +27,13 @@ public interface MarketRepository extends JpaRepository<Market, Integer> {
             nativeQuery = true)
     Market findNearestMarket(@Param("lat") double lat, @Param("lng") double lng);
 
+    //Redis 직렬화 문제 해결
+    @Query("SELECT m FROM Market m " +
+            "LEFT JOIN FETCH m.marketMainImageUrls " +
+            "LEFT JOIN FETCH m.marketEventImageUrls " +
+            "WHERE m.marketId = :marketId")
+    Optional<Market> findByIdWithImages(@Param("marketId") Integer marketId);
+    
     // Home API용
     @Query(value = "SELECT market_id as marketId, " +
             "ST_Y(market_coord) as latitude, " +
