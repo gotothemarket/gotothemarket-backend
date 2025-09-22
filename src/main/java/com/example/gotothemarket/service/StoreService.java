@@ -39,6 +39,7 @@ public class StoreService {
     private EntityManager em;
 
     // POST
+    @CacheEvict(value = "location-validation", allEntries = true)
     public StoreDTO.StoreResponseDTO createStore(StoreDTO.StoreRequestDTO dto) {
 
         // StoreType 조회
@@ -457,47 +458,43 @@ public class StoreService {
         }
         return geometryFactory.createPoint(new Coordinate(longitude, latitude));
     }
-
-    // StoreService.java에 추가할 메서드
-    /**
-     * 가게 위치 검증 - 반경 3m 내 중복 가게 확인
-     */
+    
+    // 가게 위치 검증
+    @Cacheable(value = "location-validation", key = "#latitude + ',' + #longitude")
     @Transactional(readOnly = true)
     public StoreDTO.LocationValidationResponse validateStoreLocation(Double latitude, Double longitude) {
-        final double SEARCH_RADIUS_METERS = 3.0; // 3미터
+        final double SEARCH_RADIUS_METERS = 7.0;
 
         if (latitude == null || longitude == null) {
-            return StoreDTO.LocationValidationResponse.builder()
-                    .isValid(false)
-                    .message("위도와 경도가 모두 필요합니다.")
-                    .nearbyStores(new ArrayList<>())
-                    .searchRadius(SEARCH_RADIUS_METERS)
-                    .build();
+            return createInvalidResponse("위도와 경도가 모두 필요합니다.", SEARCH_RADIUS_METERS);
         }
 
-        // 반경 3m 내 가게 검색
-        List<Store> nearbyStores = storeRepository.findStoresWithinRadius(latitude, longitude, SEARCH_RADIUS_METERS);
+        // 위도/경도 유효성 검사
+        if (!isValidCoordinate(latitude, longitude)) {
+            return createInvalidResponse("유효하지 않은 좌표입니다.", SEARCH_RADIUS_METERS);
+        }
+
+        // 좌표를 반올림해서 캐시 히트율 (약 5m 정확도)
+        Double roundedLat = Math.round(latitude * 5000.0) / 5000.0;
+        Double roundedLng = Math.round(longitude * 5000.0) / 5000.0;
+
+        // 최적화된 쿼리로 근처 가게 검색
+        List<StoreRepository.NearbyStoreProjection> nearbyStores =
+                storeRepository.findNearbyStoresForCaching(roundedLat, roundedLng, SEARCH_RADIUS_METERS);
 
         if (!nearbyStores.isEmpty()) {
             // 중복 가게가 있는 경우
             List<StoreDTO.NearbyStoreInfo> nearbyStoreInfos = nearbyStores.stream()
-                    .map(store -> {
-                        double distance = calculateDistanceInMeters(
-                                latitude, longitude,
-                                store.getStoreCoord().getY(), store.getStoreCoord().getX()
-                        );
-
-                        return StoreDTO.NearbyStoreInfo.builder()
-                                .storeId(store.getStoreId())
-                                .storeName(store.getStoreName())
-                                .storeTypeName(store.getStoreType() != null ? store.getStoreType().getTypeName() : null)
-                                .distance(Math.round(distance * 100.0) / 100.0) // 소수점 2자리까지
-                                .storeCoord(StoreDTO.StoreCoord.builder()
-                                        .lat(store.getStoreCoord().getY())
-                                        .lng(store.getStoreCoord().getX())
-                                        .build())
-                                .build();
-                    })
+                    .map(projection -> StoreDTO.NearbyStoreInfo.builder()
+                            .storeId(projection.getStoreId())
+                            .storeName(projection.getStoreName())
+                            .storeTypeName(projection.getTypeName())
+                            .distance(Math.round(projection.getDistanceMeters() * 100.0) / 100.0)
+                            .storeCoord(StoreDTO.StoreCoord.builder()
+                                    .lat(projection.getLatitude())
+                                    .lng(projection.getLongitude())
+                                    .build())
+                            .build())
                     .collect(Collectors.toList());
 
             return StoreDTO.LocationValidationResponse.builder()
@@ -508,7 +505,6 @@ public class StoreService {
                     .build();
         }
 
-        // 중복 가게가 없는 경우
         return StoreDTO.LocationValidationResponse.builder()
                 .isValid(true)
                 .message("이 위치에 가게를 등록할 수 있습니다.")
@@ -517,18 +513,19 @@ public class StoreService {
                 .build();
     }
 
-    // 미터 단위 거리 계산
-    private double calculateDistanceInMeters(double lat1, double lon1, double lat2, double lon2) {
-        final int R = 6371000; // 지구 반지름 (미터)
+    // 헬퍼 메서드들
+    private boolean isValidCoordinate(Double latitude, Double longitude) {
+        return latitude >= -90 && latitude <= 90 &&
+                longitude >= -180 && longitude <= 180;
+    }
 
-        double latDistance = Math.toRadians(lat2 - lat1);
-        double lonDistance = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        return R * c; // 거리 (미터)
+    private StoreDTO.LocationValidationResponse createInvalidResponse(String message, double radius) {
+        return StoreDTO.LocationValidationResponse.builder()
+                .isValid(false)
+                .message(message)
+                .nearbyStores(new ArrayList<>())
+                .searchRadius(radius)
+                .build();
     }
 
 

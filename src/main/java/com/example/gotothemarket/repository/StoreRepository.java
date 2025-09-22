@@ -106,4 +106,40 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
             @Param("longitude") Double longitude,
             @Param("radiusMeters") Double radiusMeters
     );
+
+    @Query(value = """
+    SELECT 
+        s.store_id as storeId,
+        s.store_name as storeName,
+        ST_Y(s.store_coord) as latitude,
+        ST_X(s.store_coord) as longitude,
+        st.type_name as typeName,
+        ST_Distance(
+            s.store_coord::geography,
+            ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography
+        ) as distanceMeters
+    FROM store s
+    JOIN store_type st ON s.store_type = st.store_type
+    WHERE ST_DWithin(
+        s.store_coord::geography,
+        ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography,
+        :radiusMeters
+    )
+    ORDER BY distanceMeters
+    LIMIT 5
+    """, nativeQuery = true)
+    List<NearbyStoreProjection> findNearbyStoresForCaching(
+            @Param("latitude") Double latitude,
+            @Param("longitude") Double longitude,
+            @Param("radiusMeters") Double radiusMeters
+    );
+
+    public interface NearbyStoreProjection {
+        Integer getStoreId();
+        String getStoreName();
+        Double getLatitude();
+        Double getLongitude();
+        String getTypeName();
+        Double getDistanceMeters();
+    }
 }

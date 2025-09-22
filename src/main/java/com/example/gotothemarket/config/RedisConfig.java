@@ -15,6 +15,8 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 public class RedisConfig {
@@ -40,7 +42,8 @@ public class RedisConfig {
         GenericJackson2JsonRedisSerializer jsonSerializer =
                 new GenericJackson2JsonRedisSerializer(objectMapper);
 
-        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+        // 기본 캐시 설정
+        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
@@ -48,8 +51,19 @@ public class RedisConfig {
                         .fromSerializer(jsonSerializer))
                 .disableCachingNullValues();
 
+        // 각 캐시별 개별 TTL 설정
+        Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
+
+        // 기존 캐시들
+        cacheConfigurations.put("store-detail", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put("home-data", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+
+        // 위치 검증 캐시 - 데모용 5분 TTL (실시간성 + 성능 균형)
+        cacheConfigurations.put("location-validation", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+
         return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(config)
+                .cacheDefaults(defaultConfig)
+                .withInitialCacheConfigurations(cacheConfigurations)
                 .build();
     }
 }
