@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -94,8 +95,8 @@ public class MarketService {
                 .transport(market.getTransport())
                 .parking(market.getParking())
                 .toilet(market.getToilet())
-                .marketMainImageUrls(market.getMarketMainImageUrls())
-                .marketEventImageUrls(market.getMarketEventImageUrls());
+                .marketMainImageUrls(new ArrayList<>(market.getMarketMainImageUrls()))
+                .marketEventImageUrls(new ArrayList<>(market.getMarketEventImageUrls()));
 
         // Point 좌표를 위도/경도로 변환
         if (market.getMarketCoord() != null) {
