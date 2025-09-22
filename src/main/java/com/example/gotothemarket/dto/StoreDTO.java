@@ -171,4 +171,29 @@ public class StoreDTO {
         private String message;
         private LocalDateTime deletedAt;
     }
+
+// 위치 검증 응답 DTO
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LocationValidationResponse {
+        private Boolean isValid;
+        private String message;
+        private List<NearbyStoreInfo> nearbyStores;
+        private Double searchRadius;
+    }
+
+    // 근처 가게 정보 DTO
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NearbyStoreInfo {
+        private Integer storeId;
+        private String storeName;
+        private String storeTypeName;
+        private Double distance;
+        private StoreCoord storeCoord;
+    }
 }

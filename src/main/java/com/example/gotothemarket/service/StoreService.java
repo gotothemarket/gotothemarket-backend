@@ -458,9 +458,80 @@ public class StoreService {
         return geometryFactory.createPoint(new Coordinate(longitude, latitude));
     }
 
+    // StoreService.java에 추가할 메서드
+    /**
+     * 가게 위치 검증 - 반경 3m 내 중복 가게 확인
+     */
+    @Transactional(readOnly = true)
+    public StoreDTO.LocationValidationResponse validateStoreLocation(Double latitude, Double longitude) {
+        final double SEARCH_RADIUS_METERS = 3.0; // 3미터
+
+        if (latitude == null || longitude == null) {
+            return StoreDTO.LocationValidationResponse.builder()
+                    .isValid(false)
+                    .message("위도와 경도가 모두 필요합니다.")
+                    .nearbyStores(new ArrayList<>())
+                    .searchRadius(SEARCH_RADIUS_METERS)
+                    .build();
+        }
+
+        // 반경 3m 내 가게 검색
+        List<Store> nearbyStores = storeRepository.findStoresWithinRadius(latitude, longitude, SEARCH_RADIUS_METERS);
+
+        if (!nearbyStores.isEmpty()) {
+            // 중복 가게가 있는 경우
+            List<StoreDTO.NearbyStoreInfo> nearbyStoreInfos = nearbyStores.stream()
+                    .map(store -> {
+                        double distance = calculateDistanceInMeters(
+                                latitude, longitude,
+                                store.getStoreCoord().getY(), store.getStoreCoord().getX()
+                        );
+
+                        return StoreDTO.NearbyStoreInfo.builder()
+                                .storeId(store.getStoreId())
+                                .storeName(store.getStoreName())
+                                .storeTypeName(store.getStoreType() != null ? store.getStoreType().getTypeName() : null)
+                                .distance(Math.round(distance * 100.0) / 100.0) // 소수점 2자리까지
+                                .storeCoord(StoreDTO.StoreCoord.builder()
+                                        .lat(store.getStoreCoord().getY())
+                                        .lng(store.getStoreCoord().getX())
+                                        .build())
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+
+            return StoreDTO.LocationValidationResponse.builder()
+                    .isValid(false)
+                    .message("반경 " + SEARCH_RADIUS_METERS + "m 내에 다른 가게가 있습니다. 이 가게들 중 하나인가요?")
+                    .nearbyStores(nearbyStoreInfos)
+                    .searchRadius(SEARCH_RADIUS_METERS)
+                    .build();
+        }
+
+        // 중복 가게가 없는 경우
+        return StoreDTO.LocationValidationResponse.builder()
+                .isValid(true)
+                .message("이 위치에 가게를 등록할 수 있습니다.")
+                .nearbyStores(new ArrayList<>())
+                .searchRadius(SEARCH_RADIUS_METERS)
+                .build();
+    }
+
+    // 미터 단위 거리 계산
+    private double calculateDistanceInMeters(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371000; // 지구 반지름 (미터)
+
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c; // 거리 (미터)
+    }
 
 
-    //TODO: 멤버, 마켓, 점포 유형 만들면 그거쓰고 지우기
     private Member createTempMember() {
         return Member.builder().memberId(1).build();
     }

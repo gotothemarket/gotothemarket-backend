@@ -92,4 +92,18 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
 
     int countByMember_MemberId(Integer memberId);
 
+    //반경 내 가게 검색
+    @Query(value = """
+    SELECT s.* FROM store s
+    WHERE ST_DWithin(
+        s.store_coord::geography,
+        ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography,
+        :radiusMeters
+    )
+    """, nativeQuery = true)
+    List<Store> findStoresWithinRadius(
+            @Param("latitude") Double latitude,
+            @Param("longitude") Double longitude,
+            @Param("radiusMeters") Double radiusMeters
+    );
 }
