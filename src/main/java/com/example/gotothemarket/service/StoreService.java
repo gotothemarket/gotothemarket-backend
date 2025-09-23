@@ -459,7 +459,7 @@ public class StoreService {
     @Cacheable(value = "location-validation", key = "#latitude + ',' + #longitude")
     @Transactional(readOnly = true)
     public StoreDTO.LocationValidationResponse validateStoreLocation(Double latitude, Double longitude) {
-        final double SEARCH_RADIUS_METERS = 7.0;
+        final double SEARCH_RADIUS_METERS = 10.0; // 10.0미터
 
         if (latitude == null || longitude == null) {
             return createInvalidResponse("위도와 경도가 모두 필요합니다.", SEARCH_RADIUS_METERS);
