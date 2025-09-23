@@ -96,9 +96,13 @@ public class StoreService {
     @Cacheable(value = "store-detail", key = "#storeId")
     @Transactional(readOnly = true)
     public StoreDTO.StoreDetailResponse getStoreDetail(Integer storeId) {
-        // 한 번의 쿼리로 모든 연관 데이터 조회
-        Store store = storeRepository.findStoreWithAllDetailsById(storeId)
+        // 기본 정보와 사진만 먼저 조회
+        Store store = storeRepository.findStoreWithPhotosById(storeId)
                 .orElseThrow(() -> new RuntimeException("상점을 찾을 수 없습니다. ID: " + storeId));
+
+        // 리뷰는 별도로 조회
+        Store storeWithReviews = storeRepository.findStoreWithReviewsById(storeId)
+                .orElse(store);
 
         return StoreDTO.StoreDetailResponse.builder()
                 .store(createStoreInfo(store))

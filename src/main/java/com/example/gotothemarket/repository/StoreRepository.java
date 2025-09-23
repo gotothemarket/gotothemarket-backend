@@ -29,11 +29,21 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
         String getStoreTypeName();
     }
 
+    // 반경 내 가게 검색용 Projection
+    interface NearbyStoreProjection {
+        Integer getStoreId();
+        String getStoreName();
+        Double getLatitude();
+        Double getLongitude();
+        String getTypeName();
+        Double getDistanceMeters();
+    }
+
     @Query("select s.storeCoord as storeCoord, s.storeName as storeName, s.storeId as storeId, " +
             "s.storeType.storeTypeId as storeType from Store s where s.storeId = :id")
     Optional<StoreLoc> findLocById(@Param("id") int id);
 
-    // 기본 상점 정보만 조회
+    // 기본 상점 정보만 조회 (member, market, storeType)
     @Query("SELECT s FROM Store s " +
             "LEFT JOIN FETCH s.member m " +
             "LEFT JOIN FETCH s.market mk " +
@@ -41,16 +51,7 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
             "WHERE s.storeId = :storeId")
     Optional<Store> findStoreWithBasicDetailsById(@Param("storeId") Integer storeId);
 
-    // 리뷰와 함께 조회
-    @Query("""
-       SELECT s
-       FROM Store s
-       LEFT JOIN FETCH s.reviews r
-       LEFT JOIN FETCH r.member rm
-       WHERE s.storeId = :storeId
-       """)
-    Optional<Store> findStoreWithReviewsById(@Param("storeId") Integer storeId);
-    // 사진과 함께 조회
+    // 사진과 함께 조회 (MultipleBagFetchException 방지를 위해 photos만)
     @Query("SELECT DISTINCT s FROM Store s " +
             "LEFT JOIN FETCH s.member m " +
             "LEFT JOIN FETCH s.market mk " +
@@ -59,13 +60,14 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
             "WHERE s.storeId = :storeId")
     Optional<Store> findStoreWithPhotosById(@Param("storeId") Integer storeId);
 
+    // 리뷰와 함께 조회 (MultipleBagFetchException 방지를 위해 reviews만)
     @Query("SELECT DISTINCT s FROM Store s " +
             "LEFT JOIN FETCH s.reviews r " +
             "LEFT JOIN FETCH r.member rm " +
             "WHERE s.storeId = :storeId")
-    Optional<Store> findStoreWithReviewsAndMembersById(@Param("storeId") Integer storeId);
+    Optional<Store> findStoreWithReviewsById(@Param("storeId") Integer storeId);
 
-    // Home API용
+    // Home API용 - 모든 가게 좌표
     @Query(value = "SELECT s.store_id as storeId, " +
             "ST_Y(s.store_coord) as latitude, " +
             "ST_X(s.store_coord) as longitude, " +
@@ -77,7 +79,7 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
             nativeQuery = true)
     List<StoreCoordProjection> findAllStoreCoords();
 
-    // storeTypeId로 필터링하는 새로운 메서드 추가
+    // Home API용 - storeTypeId로 필터링
     @Query(value = "SELECT s.store_id as storeId, " +
             "ST_Y(s.store_coord) as latitude, " +
             "ST_X(s.store_coord) as longitude, " +
@@ -90,9 +92,10 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
             nativeQuery = true)
     List<StoreCoordProjection> findAllStoreCoordsWithStoreTypeFilter(@Param("storeTypeId") Integer storeTypeId);
 
+    // 멤버별 가게 수 카운트
     int countByMember_MemberId(Integer memberId);
 
-    //반경 내 가게 검색
+    // 반경 내 가게 검색 (Store 엔티티 반환)
     @Query(value = """
     SELECT s.* FROM store s
     WHERE ST_DWithin(
@@ -107,6 +110,7 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
             @Param("radiusMeters") Double radiusMeters
     );
 
+    // 반경 내 가게 검색 (캐싱용 Projection 반환)
     @Query(value = """
     SELECT 
         s.store_id as storeId,
@@ -133,25 +137,4 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
             @Param("longitude") Double longitude,
             @Param("radiusMeters") Double radiusMeters
     );
-
-    public interface NearbyStoreProjection {
-        Integer getStoreId();
-        String getStoreName();
-        Double getLatitude();
-        Double getLongitude();
-        String getTypeName();
-        Double getDistanceMeters();
-    }
-
-    @Query("""
-    SELECT s FROM Store s 
-    LEFT JOIN FETCH s.member m
-    LEFT JOIN FETCH s.market mk  
-    LEFT JOIN FETCH s.storeType st
-    LEFT JOIN FETCH s.photos p
-    LEFT JOIN FETCH s.reviews r
-    LEFT JOIN FETCH r.member rm
-    WHERE s.storeId = :storeId
-    """)
-    Optional<Store> findStoreWithAllDetailsById(@Param("storeId") Integer storeId);
 }
