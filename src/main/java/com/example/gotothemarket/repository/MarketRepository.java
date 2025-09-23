@@ -46,9 +46,6 @@ public interface MarketRepository extends JpaRepository<Market, Integer> {
     @Query(value = "SELECT market_entrance_coord FROM market WHERE market_id = :marketId", nativeQuery = true)
     Point findEntranceCoord(@Param("marketId") Integer marketId);
 
-    @Query("select m.marketEntranceCoord from Market m where m.marketId = :id")
-    Optional<Point> findEntranceCoord(@Param("id") int id);
-
     @Query("select m from Market m where m.marketId = :id")
     Optional<Market> findBasic(@Param("id") int id);
 

@@ -57,6 +57,8 @@ public class RedisConfig {
         // 기존 캐시들
         cacheConfigurations.put("store-detail", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("home-data", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+        cacheConfigurations.put("market-detail", defaultConfig.entryTtl(Duration.ofHours(2)));
+        cacheConfigurations.put("store-list", defaultConfig.entryTtl(Duration.ofMinutes(10)));
 
         // 위치 검증 캐시 - 데모용 5분 TTL (실시간성 + 성능 균형)
         cacheConfigurations.put("location-validation", defaultConfig.entryTtl(Duration.ofMinutes(5)));

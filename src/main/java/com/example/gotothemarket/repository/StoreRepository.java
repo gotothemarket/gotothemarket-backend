@@ -142,4 +142,16 @@ public interface StoreRepository extends JpaRepository<Store, Integer> {
         String getTypeName();
         Double getDistanceMeters();
     }
+
+    @Query("""
+    SELECT s FROM Store s 
+    LEFT JOIN FETCH s.member m
+    LEFT JOIN FETCH s.market mk  
+    LEFT JOIN FETCH s.storeType st
+    LEFT JOIN FETCH s.photos p
+    LEFT JOIN FETCH s.reviews r
+    LEFT JOIN FETCH r.member rm
+    WHERE s.storeId = :storeId
+    """)
+    Optional<Store> findStoreWithAllDetailsById(@Param("storeId") Integer storeId);
 }
