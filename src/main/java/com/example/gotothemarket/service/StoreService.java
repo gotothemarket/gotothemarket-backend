@@ -44,7 +44,7 @@ public class StoreService {
 
         // StoreType 조회
         StoreType storeType = storeTypeRepository.findById(dto.getStoreType())
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 상점 타입입니다. ID: " + dto.getStoreType()));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상점 타입입니다. ID: " + dto.getStoreType()));
 
         //가장 가까운 시장 찾기
         Market nearestMarket = marketRepository.findNearestMarket(
@@ -52,7 +52,7 @@ public class StoreService {
                 dto.getStoreCoord().getLng()
         );
         if (nearestMarket == null) {
-            throw new RuntimeException("주변에 마켓을 찾을 수 없습니다.");
+            throw new IllegalArgumentException("주변에 마켓을 찾을 수 없습니다.");
         }
         
         Point storeCoord = createPoint(
@@ -98,7 +98,7 @@ public class StoreService {
     public StoreDTO.StoreDetailResponse getStoreDetail(Integer storeId) {
         // 기본 정보와 사진만 먼저 조회
         Store store = storeRepository.findStoreWithPhotosById(storeId)
-                .orElseThrow(() -> new RuntimeException("상점을 찾을 수 없습니다. ID: " + storeId));
+                .orElseThrow(() -> new IllegalArgumentException("상점을 찾을 수 없습니다. ID: " + storeId));
 
         // 리뷰는 별도로 조회
         Store storeWithReviews = storeRepository.findStoreWithReviewsById(storeId)
@@ -172,13 +172,13 @@ public class StoreService {
     @CacheEvict(value = {"store-detail", "home-data"}, allEntries = true)
     public StoreDTO.StoreDetailResponse updateStore(Integer storeId, StoreDTO.StoreUpdateDTO updateDTO) {
         Store store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new RuntimeException("상점을 찾을 수 없습니다. ID: " + storeId));
+                .orElseThrow(() -> new IllegalArgumentException("상점을 찾을 수 없습니다. ID: " + storeId));
 
         // StoreType 업데이트 처리
         StoreType storeType = store.getStoreType();
         if (updateDTO.getStoreType() != null) {
             storeType = storeTypeRepository.findById(updateDTO.getStoreType())
-                    .orElseThrow(() -> new RuntimeException("존재하지 않는 상점 타입입니다. ID: " + updateDTO.getStoreType()));
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상점 타입입니다. ID: " + updateDTO.getStoreType()));
         }
         // 아이콘
         String storeIconUrl = store.getStoreIcon();
@@ -220,7 +220,7 @@ public class StoreService {
     //사진 업로드
     public StoreDTO.PhotoUploadResponse uploadStorePhoto(Integer storeId, MultipartFile file) {
         Store store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new RuntimeException("가게를 찾을 수 없습니다. ID: " + storeId));
+                .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다. ID: " + storeId));
         // 유효성 검사
         validateImageFile(file);
         // S3에 파일 업로드
@@ -281,32 +281,32 @@ public class StoreService {
 
     private void validateImageFile(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new RuntimeException("업로드할 파일이 없습니다.");
+            throw new IllegalArgumentException("업로드할 파일이 없습니다.");
         }
         // 파일 크기 제한 (예: 10MB)
         long maxSize = 10 * 1024 * 1024; // 10MB
         if (file.getSize() > maxSize) {
-            throw new RuntimeException("파일 크기는 10MB를 초과할 수 없습니다.");
+            throw new IllegalArgumentException("파일 크기는 10MB를 초과할 수 없습니다.");
         }
         // 이미지 파일 형식 검사
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
-            throw new RuntimeException("이미지 파일만 업로드 가능합니다.");
+            throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
         }
     }
 
     public StoreDTO.PhotoDeleteResponse deleteStorePhoto(Integer storeId, Integer photoId) {
         // 가게 존재 여부 확인
         Store store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new RuntimeException("가게를 찾을 수 없습니다. ID: " + storeId));
+                .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다. ID: " + storeId));
 
         // 사진 존재 여부 및 소속 확인
         Photo photo = photoRepository.findById(photoId)
-                .orElseThrow(() -> new RuntimeException("사진을 찾을 수 없습니다. ID: " + photoId));
+                .orElseThrow(() -> new IllegalArgumentException("사진을 찾을 수 없습니다. ID: " + photoId));
 
         // 해당 사진이 해당 가게의 사진인지 확인
         if (!photo.getStore().getStoreId().equals(storeId)) {
-            throw new RuntimeException("해당 가게의 사진이 아닙니다.");
+            throw new IllegalArgumentException("해당 가게의 사진이 아닙니다.");
         }
 
         // S3에서 파일 삭제
@@ -459,7 +459,7 @@ public class StoreService {
     @Cacheable(value = "location-validation", key = "#latitude + ',' + #longitude")
     @Transactional(readOnly = true)
     public StoreDTO.LocationValidationResponse validateStoreLocation(Double latitude, Double longitude) {
-        final double SEARCH_RADIUS_METERS = 50.0; // 10.0미터
+        final double SEARCH_RADIUS_METERS = 10.0; // 10.0미터
 
         if (latitude == null || longitude == null) {
             return createInvalidResponse("위도와 경도가 모두 필요합니다.", SEARCH_RADIUS_METERS);
@@ -533,9 +533,10 @@ public class StoreService {
         Double latitude = null;
         Double longitude = null;
 
-        if (savedStore.getStoreCoord() != null) {
-            latitude = savedStore.getStoreCoord().getY();
-            longitude = savedStore.getStoreCoord().getX();
+        Point coord = savedStore.getStoreCoord();
+        if (coord != null) {
+            latitude = coord.getY();
+            longitude = coord.getX();
         }
 
         return StoreDTO.StoreResponseDTO.builder()
