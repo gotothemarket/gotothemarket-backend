@@ -62,5 +62,15 @@ public class StoreController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "가게 위치 검증 API")
+    @GetMapping("/validate-location")
+    public ResponseEntity<StoreDTO.LocationValidationResponse> validateStoreLocation(
+            @RequestParam("lat") Double latitude,
+            @RequestParam("lng") Double longitude) {
+
+        StoreDTO.LocationValidationResponse response = storeService.validateStoreLocation(latitude, longitude);
+        return ResponseEntity.ok(response);
+    }
+
 
 }

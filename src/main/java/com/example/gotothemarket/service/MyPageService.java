@@ -15,10 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Transactional(readOnly = true)
@@ -105,43 +102,62 @@ public class MyPageService {
         );
     }
 
-    @Cacheable(value = "my-page", key = "#memberId")
     public MyPageResponse getMyPage(Integer memberId){
-        Member m = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다: " + memberId));
+        try {
+            Member m = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다: " + memberId));
 
-        int storeCnt  = storeRepository.countByMember_MemberId(memberId);
-        int reviewCnt = reviewRepository.countByMember_MemberId(memberId);
-        // 사용자 보유(획득) 뱃지 수: acquired=true만 카운트
-        List<UserBadge> userBadges = userBadgeRepository.findByMemberId(memberId);
-        int badgeCnt = (int) userBadges.stream().filter(UserBadge::isAcquired).count();
+            int storeCnt = storeRepository.countByMember_MemberId(memberId);
+            int reviewCnt = reviewRepository.countByMember_MemberId(memberId);
 
-        // 장착된 배지 1개만 노출: user_badge.equipped=true 우선, 없으면 member.attachedBadgeId 사용
-        Optional<Integer> attachedBadgeIdOpt = userBadges.stream()
-                .filter(UserBadge::isEquipped)
-                .map(ub -> ub.getBadgeId().intValue())
-                .findFirst();
+            // 기존 Integer 타입 메서드 사용 (이미 작동하는 메서드)
+            List<UserBadge> userBadges = userBadgeRepository.findByMemberId(memberId);
+            int badgeCnt = (int) userBadges.stream().filter(UserBadge::isAcquired).count();
 
-        if (attachedBadgeIdOpt.isEmpty() && m.getAttachedBadgeId() != null) {
-            attachedBadgeIdOpt = Optional.of(m.getAttachedBadgeId());
+            // 장착된 배지 찾기 (equipped=true인 배지)
+            Optional<Integer> attachedBadgeIdOpt = userBadges.stream()
+                    .filter(UserBadge::isEquipped)
+                    .map(ub -> {
+                        // 안전한 타입 변환 - Long을 Integer로 변환
+                        Long badgeId = ub.getBadgeId();
+                        return badgeId != null ? badgeId.intValue() : null;
+                    })
+                    .filter(Objects::nonNull) // null 값 제거
+                    .findFirst();
+
+            // Member의 attachedBadgeId 백업 사용 (현재는 NULL)
+            if (attachedBadgeIdOpt.isEmpty() && m.getAttachedBadgeId() != null) {
+                attachedBadgeIdOpt = Optional.of(m.getAttachedBadgeId());
+            }
+
+            // Badge 상세 정보 조회
+            var badgeItems = List.<MyPageResponse.BadgeItem>of();
+            if (attachedBadgeIdOpt.isPresent()) {
+                final Integer finalBadgeId = attachedBadgeIdOpt.get(); // final 변수로 추출
+                Optional<Badge> attached = badgeRepository.findById(finalBadgeId);
+                badgeItems = attached
+                        .map(b -> List.of(new MyPageResponse.BadgeItem(
+                                finalBadgeId, // attachedBadgeIdOpt.get() 대신 finalBadgeId 사용
+                                b.getBadgeName(),
+                                b.getBadgeIcon())))
+                        .orElse(List.of());
+            }
+
+            var profile = new MyPageResponse.Profile(
+                    m.getMemberId(),
+                    m.getNickname(),
+                    badgeItems,
+                    storeCnt,
+                    reviewCnt,
+                    badgeCnt
+            );
+
+            return MyPageResponse.ok(new MyPageResponse.Data(profile));
+
+        } catch (Exception e) {
+            System.err.println("MyPage Error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("마이페이지 조회 중 오류가 발생했습니다", e);
         }
-
-        Optional<Badge> attached = attachedBadgeIdOpt
-                .flatMap(id -> badgeRepository.findById(id));
-
-        var badgeItems = attached
-                .map(b -> List.of(new MyPageResponse.BadgeItem(
-                        m.getAttachedBadgeId(), b.getBadgeName(), b.getBadgeIcon())))
-                .orElse(List.of());
-
-        var profile = new MyPageResponse.Profile(
-                m.getMemberId(),
-                m.getNickname(),
-                badgeItems,
-                storeCnt,
-                reviewCnt,
-                badgeCnt
-        );
-        return MyPageResponse.ok(new MyPageResponse.Data(profile));
     }
 }

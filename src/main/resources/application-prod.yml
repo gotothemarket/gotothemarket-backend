@@ -12,11 +12,12 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:0118}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 300000
-      max-lifetime: 1200000
+      maximum-pool-size: 15
+      minimum-idle: 8
+      connection-timeout: 20000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000 # 커넥션 누수 감지 추가
 
   # Redis 설정 추가
   data:
@@ -26,15 +27,17 @@ spring:
       timeout: 2000ms
       lettuce:
         pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
+          max-active: 12
+          max-idle: 12
+          min-idle: 2
+          max-wait: 1000ms   # 최대 대기 시간 추가
+        shutdown-timeout: 100ms
 
   # 캐시 설정 추가
   cache:
     type: redis
     redis:
-      time-to-live: 300000
+      time-to-live: 180000
       cache-null-values: false
 
   jpa:
@@ -64,11 +67,17 @@ springdoc:
 
 logging:
   level:
-    org.springframework.web: INFO
-    org.hibernate: INFO
+    root: WARN
     com.example.gotothemarket: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN
+    org.springframework.cache: WARN
+    org.springframework.data.jpa.repository.query: WARN
+    org.hibernate.internal.AbstractSharedSessionContract: ERROR
+    org.hibernate.resource.transaction.backend.jdbc: ERROR
+    org.hibernate.orm.sql.ast: WARN
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
 management:
   endpoints:

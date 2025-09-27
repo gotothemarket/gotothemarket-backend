@@ -39,11 +39,12 @@ public class StoreService {
     private EntityManager em;
 
     // POST
+    @CacheEvict(value = "location-validation", allEntries = true)
     public StoreDTO.StoreResponseDTO createStore(StoreDTO.StoreRequestDTO dto) {
 
         // StoreType 조회
         StoreType storeType = storeTypeRepository.findById(dto.getStoreType())
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 상점 타입입니다. ID: " + dto.getStoreType()));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상점 타입입니다. ID: " + dto.getStoreType()));
 
         //가장 가까운 시장 찾기
         Market nearestMarket = marketRepository.findNearestMarket(
@@ -51,7 +52,7 @@ public class StoreService {
                 dto.getStoreCoord().getLng()
         );
         if (nearestMarket == null) {
-            throw new RuntimeException("주변에 마켓을 찾을 수 없습니다.");
+            throw new IllegalArgumentException("주변에 마켓을 찾을 수 없습니다.");
         }
         
         Point storeCoord = createPoint(
@@ -95,23 +96,19 @@ public class StoreService {
     @Cacheable(value = "store-detail", key = "#storeId")
     @Transactional(readOnly = true)
     public StoreDTO.StoreDetailResponse getStoreDetail(Integer storeId) {
-        // 1. 기본 상점 정보 조회
-        Store basicStore = storeRepository.findStoreWithBasicDetailsById(storeId)
-                .orElseThrow(() -> new RuntimeException("상점을 찾을 수 없습니다. ID: " + storeId));
+        // 기본 정보와 사진만 먼저 조회
+        Store store = storeRepository.findStoreWithPhotosById(storeId)
+                .orElseThrow(() -> new IllegalArgumentException("상점을 찾을 수 없습니다. ID: " + storeId));
 
-        // 2. 사진 정보와 함께 조회 (N+1 방지)
-        Store storeWithPhotos = storeRepository.findStoreWithPhotosById(storeId)
-                .orElse(basicStore);
-
-        // 3. 리뷰와 작성자 정보 함께 조회 (N+1 방지)
-        Store storeWithReviews = storeRepository.findStoreWithReviewsAndMembersById(storeId)
-                .orElse(basicStore);
+        // 리뷰는 별도로 조회
+        Store storeWithReviews = storeRepository.findStoreWithReviewsById(storeId)
+                .orElse(store);
 
         return StoreDTO.StoreDetailResponse.builder()
-                .store(createStoreInfo(basicStore))
-                .photos(createPhotoInfoList(storeWithPhotos.getPhotos()))     // ✅ 이미 조회됨
-                .reviewSummary(createReviewSummary(basicStore))
-                .reviews(createReviewInfoListOptimized(storeWithReviews.getReviews())) // ✅ 최적화된 메소드
+                .store(createStoreInfo(store))
+                .photos(createPhotoInfoList(store.getPhotos()))
+                .reviewSummary(createReviewSummary(store))
+                .reviews(createReviewInfoListOptimized(store.getReviews()))
                 .build();
     }
 
@@ -175,13 +172,13 @@ public class StoreService {
     @CacheEvict(value = {"store-detail", "home-data"}, allEntries = true)
     public StoreDTO.StoreDetailResponse updateStore(Integer storeId, StoreDTO.StoreUpdateDTO updateDTO) {
         Store store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new RuntimeException("상점을 찾을 수 없습니다. ID: " + storeId));
+                .orElseThrow(() -> new IllegalArgumentException("상점을 찾을 수 없습니다. ID: " + storeId));
 
         // StoreType 업데이트 처리
         StoreType storeType = store.getStoreType();
         if (updateDTO.getStoreType() != null) {
             storeType = storeTypeRepository.findById(updateDTO.getStoreType())
-                    .orElseThrow(() -> new RuntimeException("존재하지 않는 상점 타입입니다. ID: " + updateDTO.getStoreType()));
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상점 타입입니다. ID: " + updateDTO.getStoreType()));
         }
         // 아이콘
         String storeIconUrl = store.getStoreIcon();
@@ -223,7 +220,7 @@ public class StoreService {
     //사진 업로드
     public StoreDTO.PhotoUploadResponse uploadStorePhoto(Integer storeId, MultipartFile file) {
         Store store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new RuntimeException("가게를 찾을 수 없습니다. ID: " + storeId));
+                .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다. ID: " + storeId));
         // 유효성 검사
         validateImageFile(file);
         // S3에 파일 업로드
@@ -284,32 +281,32 @@ public class StoreService {
 
     private void validateImageFile(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new RuntimeException("업로드할 파일이 없습니다.");
+            throw new IllegalArgumentException("업로드할 파일이 없습니다.");
         }
         // 파일 크기 제한 (예: 10MB)
         long maxSize = 10 * 1024 * 1024; // 10MB
         if (file.getSize() > maxSize) {
-            throw new RuntimeException("파일 크기는 10MB를 초과할 수 없습니다.");
+            throw new IllegalArgumentException("파일 크기는 10MB를 초과할 수 없습니다.");
         }
         // 이미지 파일 형식 검사
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
-            throw new RuntimeException("이미지 파일만 업로드 가능합니다.");
+            throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
         }
     }
 
     public StoreDTO.PhotoDeleteResponse deleteStorePhoto(Integer storeId, Integer photoId) {
         // 가게 존재 여부 확인
         Store store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new RuntimeException("가게를 찾을 수 없습니다. ID: " + storeId));
+                .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다. ID: " + storeId));
 
         // 사진 존재 여부 및 소속 확인
         Photo photo = photoRepository.findById(photoId)
-                .orElseThrow(() -> new RuntimeException("사진을 찾을 수 없습니다. ID: " + photoId));
+                .orElseThrow(() -> new IllegalArgumentException("사진을 찾을 수 없습니다. ID: " + photoId));
 
         // 해당 사진이 해당 가게의 사진인지 확인
         if (!photo.getStore().getStoreId().equals(storeId)) {
-            throw new RuntimeException("해당 가게의 사진이 아닙니다.");
+            throw new IllegalArgumentException("해당 가게의 사진이 아닙니다.");
         }
 
         // S3에서 파일 삭제
@@ -457,10 +454,77 @@ public class StoreService {
         }
         return geometryFactory.createPoint(new Coordinate(longitude, latitude));
     }
+    
+    // 가게 위치 검증
+    @Cacheable(value = "location-validation", key = "#latitude + ',' + #longitude")
+    @Transactional(readOnly = true)
+    public StoreDTO.LocationValidationResponse validateStoreLocation(Double latitude, Double longitude) {
+        final double SEARCH_RADIUS_METERS = 10.0; // 10.0미터
+
+        if (latitude == null || longitude == null) {
+            return createInvalidResponse("위도와 경도가 모두 필요합니다.", SEARCH_RADIUS_METERS);
+        }
+
+        // 위도/경도 유효성 검사
+        if (!isValidCoordinate(latitude, longitude)) {
+            return createInvalidResponse("유효하지 않은 좌표입니다.", SEARCH_RADIUS_METERS);
+        }
+
+        // 좌표를 반올림해서 캐시 히트율 (약 5m 정확도)
+        Double roundedLat = Math.round(latitude * 5000.0) / 5000.0;
+        Double roundedLng = Math.round(longitude * 5000.0) / 5000.0;
+
+        // 최적화된 쿼리로 근처 가게 검색
+        List<StoreRepository.NearbyStoreProjection> nearbyStores =
+                storeRepository.findNearbyStoresForCaching(roundedLat, roundedLng, SEARCH_RADIUS_METERS);
+
+        if (!nearbyStores.isEmpty()) {
+            // 중복 가게가 있는 경우
+            List<StoreDTO.NearbyStoreInfo> nearbyStoreInfos = nearbyStores.stream()
+                    .map(projection -> StoreDTO.NearbyStoreInfo.builder()
+                            .storeId(projection.getStoreId())
+                            .storeName(projection.getStoreName())
+                            .storeTypeName(projection.getTypeName())
+                            .distance(Math.round(projection.getDistanceMeters() * 100.0) / 100.0)
+                            .storeCoord(StoreDTO.StoreCoord.builder()
+                                    .lat(projection.getLatitude())
+                                    .lng(projection.getLongitude())
+                                    .build())
+                            .build())
+                    .collect(Collectors.toList());
+
+            return StoreDTO.LocationValidationResponse.builder()
+                    .isValid(false)
+                    .message("반경 " + SEARCH_RADIUS_METERS + "m 내에 다른 가게가 있습니다. 이 가게들 중 하나인가요?")
+                    .nearbyStores(nearbyStoreInfos)
+                    .searchRadius(SEARCH_RADIUS_METERS)
+                    .build();
+        }
+
+        return StoreDTO.LocationValidationResponse.builder()
+                .isValid(true)
+                .message("이 위치에 가게를 등록할 수 있습니다.")
+                .nearbyStores(new ArrayList<>())
+                .searchRadius(SEARCH_RADIUS_METERS)
+                .build();
+    }
+
+    // 헬퍼 메서드들
+    private boolean isValidCoordinate(Double latitude, Double longitude) {
+        return latitude >= -90 && latitude <= 90 &&
+                longitude >= -180 && longitude <= 180;
+    }
+
+    private StoreDTO.LocationValidationResponse createInvalidResponse(String message, double radius) {
+        return StoreDTO.LocationValidationResponse.builder()
+                .isValid(false)
+                .message(message)
+                .nearbyStores(new ArrayList<>())
+                .searchRadius(radius)
+                .build();
+    }
 
 
-
-    //TODO: 멤버, 마켓, 점포 유형 만들면 그거쓰고 지우기
     private Member createTempMember() {
         return Member.builder().memberId(1).build();
     }
@@ -469,9 +533,10 @@ public class StoreService {
         Double latitude = null;
         Double longitude = null;
 
-        if (savedStore.getStoreCoord() != null) {
-            latitude = savedStore.getStoreCoord().getY();
-            longitude = savedStore.getStoreCoord().getX();
+        Point coord = savedStore.getStoreCoord();
+        if (coord != null) {
+            latitude = coord.getY();
+            longitude = coord.getX();
         }
 
         return StoreDTO.StoreResponseDTO.builder()
